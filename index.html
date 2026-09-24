@@ -426,6 +426,59 @@
             animation: slideIn 0.3s ease-in;
         }
 
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .login-panel {
+            width: min(500px, 90vw);
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 22px 50px rgba(0, 0, 0, 0.18);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .login-header h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+
+        .login-header p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .login-form {
+            display: grid;
+            gap: 18px;
+        }
+
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            background: #eef2ff;
+            color: #312e81;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 6px 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
         @keyframes slideIn {
             from {
                 transform: translateX(-20px);
@@ -476,20 +529,41 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="loginScreen" class="login-screen">
+        <div class="login-panel">
+            <div class="login-header">
+                <h2>Railway Token Login</h2>
+                <p>Enter your secure credentials to continue.</p>
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password">
+                </div>
+                <button class="action-btn btn-primary" style="width: 100%;" onclick="loginUser()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="appContainer" class="container" style="display: none;">
         <!-- Header -->
         <header>
             <div class="header-title">
                 <span class="leaf-icon">🚂</span>
                 <h1>Railway Token System</h1>
-                <span class="admin-badge">ADMIN</span>
+                <span class="user-chip" id="currentUserBadge">ADMIN</span>
             </div>
             <div class="nav-tabs">
-                <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
-                <button class="tab-btn" onclick="switchTab('parking')">Parking</button>
-                <button class="tab-btn" onclick="switchTab('tokens')">Tokens</button>
-                <button class="tab-btn" onclick="switchTab('costs')">Costs</button>
-                <button class="tab-btn" onclick="switchTab('history')">History</button>
+                <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+                <button class="tab-btn" data-tab="parking" onclick="switchTab('parking')">Parking</button>
+                <button class="tab-btn" data-tab="tokens" onclick="switchTab('tokens')">Tokens</button>
+                <button class="tab-btn" data-tab="costs" onclick="switchTab('costs')">Costs</button>
+                <button class="tab-btn" data-tab="history" onclick="switchTab('history')">History</button>
+                <button class="action-btn btn-secondary" onclick="logoutUser()" style="margin: 0;">Logout</button>
             </div>
         </header>
 
@@ -525,7 +599,7 @@
             <div class="main-card">
                 <div class="card-title">
                     Active Tokens
-                    <button class="action-btn btn-primary" onclick="showCreateTokenModal()">+ Create Token</button>
+                    <button class="action-btn btn-primary" data-permission="issue-token" onclick="showCreateTokenModal()">+ Create Token</button>
                 </div>
                 <div class="table-wrapper">
                     <table id="activeTokensTable">
@@ -580,7 +654,7 @@
             <div class="main-card">
                 <div class="card-title">
                     Token Management
-                    <button class="action-btn btn-primary" onclick="showCreateTokenModal()">+ Issue New Token</button>
+                    <button class="action-btn btn-primary" data-permission="issue-token" onclick="showCreateTokenModal()">+ Issue New Token</button>
                 </div>
                 <div class="table-wrapper">
                     <table id="tokensTable">
@@ -607,16 +681,24 @@
             <div class="main-card">
                 <div class="card-title">
                     Cost Configuration
-                    <button class="action-btn btn-primary" onclick="showCostModal()">Edit Rates</button>
+                    <button class="action-btn btn-primary" data-permission="edit-costs" onclick="showCostModal()">Edit Rates</button>
                 </div>
                 <div class="cost-section">
                     <div class="cost-item">
-                        <h4>Hourly Rate</h4>
-                        <div class="cost-value">₹<span id="hourlyRate">20</span></div>
+                        <h4>Bike 1 Hour</h4>
+                        <div class="cost-value">₹<span id="bikeHourlyRate">20</span></div>
                     </div>
                     <div class="cost-item">
-                        <h4>Daily Max Charge</h4>
-                        <div class="cost-value">₹<span id="maxCharge">100</span></div>
+                        <h4>Bike 24 Hours</h4>
+                        <div class="cost-value">₹<span id="bikeDailyRate">100</span></div>
+                    </div>
+                    <div class="cost-item">
+                        <h4>Car 1 Hour</h4>
+                        <div class="cost-value">₹<span id="carHourlyRate">40</span></div>
+                    </div>
+                    <div class="cost-item">
+                        <h4>Car 24 Hours</h4>
+                        <div class="cost-value">₹<span id="carDailyRate">200</span></div>
                     </div>
                     <div class="cost-item">
                         <h4>Monthly Pass (30 Days)</h4>
@@ -703,6 +785,13 @@
                 <input type="text" id="driverPhone" placeholder="Enter phone number" required>
             </div>
             <div class="form-group">
+                <label>Vehicle Type</label>
+                <select id="vehicleType" required>
+                    <option value="bike">Bike / Motorcycle</option>
+                    <option value="car">Car</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>Pass Type</label>
                 <select id="passType" onchange="toggleMonthlyPassFields()">
                     <option value="hourly">Daily / Hourly</option>
@@ -738,12 +827,20 @@
             <div class="modal-header">Edit Cost Configuration</div>
             <div class="success-message" id="costSuccessMessage">✓ Costs updated successfully!</div>
             <div class="form-group">
-                <label>Hourly Rate (₹)</label>
-                <input type="number" id="newHourlyRate" min="0" step="5" required>
+                <label>Bike Hourly Rate (₹)</label>
+                <input type="number" id="newBikeHourlyRate" min="0" step="5" required>
             </div>
             <div class="form-group">
-                <label>Maximum Daily Charge (₹)</label>
-                <input type="number" id="newMaxCharge" min="0" step="10" required>
+                <label>Bike Daily Max (₹)</label>
+                <input type="number" id="newBikeDailyRate" min="0" step="10" required>
+            </div>
+            <div class="form-group">
+                <label>Car Hourly Rate (₹)</label>
+                <input type="number" id="newCarHourlyRate" min="0" step="5" required>
+            </div>
+            <div class="form-group">
+                <label>Car Daily Max (₹)</label>
+                <input type="number" id="newCarDailyRate" min="0" step="10" required>
             </div>
             <div class="form-group">
                 <label>Monthly Pass Price (₹)</label>
@@ -758,97 +855,48 @@
     </div>
 
     <script>
-        // Mock database
+        const rolePermissions = {
+            siteowner: ['overview', 'parking', 'tokens', 'costs', 'history', 'issue-token', 'edit-costs', 'view-revenue'],
+            siteemployee: ['overview', 'parking', 'tokens', 'issue-token'],
+            business: ['overview', 'costs'],
+            master: ['overview', 'parking', 'tokens', 'costs', 'history', 'issue-token', 'edit-costs', 'view-revenue']
+        };
+
         let database = {
             costs: {
-                hourlyRate: 20,
-                fixedCost: 0,
-                maxCharge: 100,
+                bike: { hourlyRate: 20, dailyMax: 100 },
+                car: { hourlyRate: 40, dailyMax: 200 },
                 monthlyPassPrice: 2000,
                 gracePeriod: 15
             },
+            users: [
+                { username: 'siteowner', password: 'owner123', role: 'siteowner', name: 'Site Owner' },
+                { username: 'siteemployee', password: 'employee123', role: 'siteemployee', name: 'Site Employee' },
+                { username: 'business', password: 'business123', role: 'business', name: 'Business User' },
+                { username: 'master', password: 'master123', role: 'master', name: 'Master Admin' }
+            ],
+            currentUser: null,
             tokens: [],
             history: []
         };
 
-        // Generate sample data
-        function initializeSampleData() {
-            const now = new Date();
-            
-            // Add some sample active tokens
-            database.tokens = [
-                {
-                    id: 'A-102',
-                    vehicle: 'MH-12-BT-3498',
-                    entry: new Date(now - 45 * 60000),
-                    exit: null,
-                    spot: 'A-1',
-                    driver: 'Raj Kumar',
-                    phone: '9876543210',
-                    status: 'active'
-                },
-                {
-                    id: 'A-103',
-                    vehicle: 'MH-02-CD-5678',
-                    entry: new Date(now - 120 * 60000),
-                    exit: null,
-                    spot: 'B-1',
-                    driver: 'Priya Singh',
-                    phone: '9876543211',
-                    status: 'active'
-                },
-                {
-                    id: 'A-101',
-                    vehicle: 'MH-15-EF-2341',
-                    entry: new Date(now - 240 * 60000),
-                    exit: null,
-                    spot: 'A-2',
-                    driver: 'Amit Patel',
-                    phone: '9876543212',
-                    status: 'active'
-                }
-            ];
-
-            // Add historical data
-            database.history = [
-                {
-                    date: '2026-09-24',
-                    id: 'A-100',
-                    vehicle: 'MH-12-XY-1234',
-                    entry: '08:30 AM',
-                    exit: '10:15 AM',
-                    duration: '1h 45m',
-                    amount: 110,
-                    status: 'Completed'
-                },
-                {
-                    date: '2026-09-24',
-                    id: 'A-99',
-                    vehicle: 'KA-05-GH-4567',
-                    entry: '07:00 AM',
-                    exit: '09:30 AM',
-                    duration: '2h 30m',
-                    amount: 145,
-                    status: 'Completed'
-                }
-            ];
+        function getCostConfig(vehicleType = 'bike') {
+            return database.costs[vehicleType] || database.costs.bike;
         }
 
-        // Calculate parking cost
-        function calculateCost(entryTime, exitTime, passType = 'hourly') {
+        function calculateCost(entryTime, exitTime, vehicleType = 'bike', passType = 'hourly') {
             if (passType === 'monthly') {
                 return database.costs.monthlyPassPrice;
             }
 
+            const config = getCostConfig(vehicleType);
             const minutesDiff = (exitTime - entryTime) / (1000 * 60);
             const hoursDiff = minutesDiff / 60;
-            
+
             if (minutesDiff <= database.costs.gracePeriod) return 0;
-            
-            const hourlyCharge = Math.ceil(hoursDiff) * database.costs.hourlyRate;
-            const totalCharge = database.costs.fixedCost + hourlyCharge;
-            
-            return Math.min(totalCharge, database.costs.maxCharge);
+
+            const hourlyCharge = Math.ceil(hoursDiff) * config.hourlyRate;
+            return Math.min(hourlyCharge, config.dailyMax);
         }
 
         function getMonthlyExpiryDate(startDate) {
@@ -857,7 +905,6 @@
             return expiry;
         }
 
-        // Format duration
         function formatDuration(minutes) {
             const hours = Math.floor(minutes / 60);
             const mins = minutes % 60;
@@ -865,7 +912,6 @@
             return `${hours}h ${mins}m`;
         }
 
-        // Get current duration
         function getCurrentDuration(entryTime, passType = 'hourly') {
             if (passType === 'monthly') {
                 const expiryDate = getMonthlyExpiryDate(entryTime);
@@ -879,20 +925,147 @@
             return formatDuration(minutes);
         }
 
-        // Render tables
+        function canAccess(permission) {
+            if (!database.currentUser) return false;
+            return (rolePermissions[database.currentUser.role] || []).includes(permission);
+        }
+
+        function renderAccessControls() {
+            if (!database.currentUser) return;
+            const roleTag = database.currentUser.role.toUpperCase();
+            document.getElementById('currentUserBadge').textContent = roleTag;
+
+            document.querySelectorAll('[data-permission]').forEach(el => {
+                const permission = el.dataset.permission;
+                el.style.display = canAccess(permission) ? 'inline-flex' : 'none';
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                const tab = button.dataset.tab;
+                const visible = (rolePermissions[database.currentUser.role] || []).includes(tab);
+                button.style.display = visible ? 'inline-block' : 'none';
+            });
+
+            const shouldShowRevenue = canAccess('view-revenue');
+            const revenueCard = document.querySelector('.stat-card.revenue');
+            if (revenueCard) {
+                revenueCard.style.display = shouldShowRevenue ? 'block' : 'none';
+            }
+
+            if (!canAccess('view-revenue') && !canAccess('edit-costs')) {
+                const costsTab = document.querySelector('.tab-btn[data-tab="costs"]');
+                if (costsTab) costsTab.style.display = 'none';
+            }
+        }
+
+        function loginUser() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const user = database.users.find(item => item.username === username && item.password === password);
+
+            if (!user) {
+                alert('Invalid username or password.');
+                return;
+            }
+
+            database.currentUser = user;
+            localStorage.setItem('railwayTokenSession', JSON.stringify(user));
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            renderAccessControls();
+            switchTab('overview');
+        }
+
+        function logoutUser() {
+            database.currentUser = null;
+            localStorage.removeItem('railwayTokenSession');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function initializeSampleData() {
+            const now = new Date();
+            database.tokens = [
+                {
+                    id: 'A-102',
+                    vehicle: 'MH-12-BT-3498',
+                    vehicleType: 'bike',
+                    entry: new Date(now - 45 * 60000),
+                    exit: null,
+                    spot: 'A-1',
+                    driver: 'Raj Kumar',
+                    phone: '9876543210',
+                    status: 'active',
+                    passType: 'hourly'
+                },
+                {
+                    id: 'A-103',
+                    vehicle: 'MH-02-CD-5678',
+                    vehicleType: 'bike',
+                    entry: new Date(now - 120 * 60000),
+                    exit: null,
+                    spot: 'B-1',
+                    driver: 'Priya Singh',
+                    phone: '9876543211',
+                    status: 'active',
+                    passType: 'monthly'
+                },
+                {
+                    id: 'A-101',
+                    vehicle: 'MH-15-EF-2341',
+                    vehicleType: 'car',
+                    entry: new Date(now - 240 * 60000),
+                    exit: null,
+                    spot: 'A-2',
+                    driver: 'Amit Patel',
+                    phone: '9876543212',
+                    status: 'active',
+                    passType: 'hourly'
+                }
+            ];
+
+            database.history = [
+                {
+                    date: '2026-09-24',
+                    id: 'A-100',
+                    vehicle: 'MH-12-XY-1234',
+                    vehicleType: 'bike',
+                    entry: '08:30 AM',
+                    exit: '10:15 AM',
+                    duration: '1h 45m',
+                    amount: 60,
+                    status: 'Completed'
+                },
+                {
+                    date: '2026-09-24',
+                    id: 'A-99',
+                    vehicle: 'KA-05-GH-4567',
+                    vehicleType: 'car',
+                    entry: '07:00 AM',
+                    exit: '09:30 AM',
+                    duration: '2h 30m',
+                    amount: 110,
+                    status: 'Completed'
+                }
+            ];
+        }
+
         function renderActiveTokens() {
             const body = document.getElementById('activeTokensBody');
             body.innerHTML = '';
-            
+
             const now = new Date();
             database.tokens.filter(t => t.status === 'active').forEach(token => {
-                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, token.passType || 'hourly');
+                const cost = token.passType === 'monthly'
+                    ? database.costs.monthlyPassPrice
+                    : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly');
                 const duration = getCurrentDuration(token.entry, token.passType || 'hourly');
-                
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
                     <td>${token.vehicle}</td>
+                    <td>${token.vehicleType === 'car' ? 'Car' : 'Bike'}</td>
                     <td>${token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString()}</td>
                     <td>${duration}</td>
                     <td>₹${cost}</td>
@@ -908,19 +1081,22 @@
         function renderParkingTable() {
             const body = document.getElementById('parkingBody');
             body.innerHTML = '';
-            
+
             const now = new Date();
             database.tokens.filter(t => t.status === 'active').forEach(token => {
-                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, token.passType || 'hourly');
+                const cost = token.passType === 'monthly'
+                    ? database.costs.monthlyPassPrice
+                    : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly');
                 const minutes = Math.floor((now - token.entry) / (1000 * 60));
                 const hours = (minutes / 60).toFixed(1);
-                const duration = token.passType === 'monthly' ? `30d` : `${hours}h`;
-                
+                const duration = token.passType === 'monthly' ? '30d' : `${hours}h`;
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
                     <td>${token.vehicle}</td>
                     <td>${token.spot}</td>
+                    <td>${token.vehicleType === 'car' ? 'Car' : 'Bike'}</td>
                     <td>${token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString()}</td>
                     <td>${duration}</td>
                     <td>₹${cost}</td>
@@ -937,17 +1113,20 @@
         function renderTokensTable() {
             const body = document.getElementById('tokensBody');
             body.innerHTML = '';
-            
+
             const now = new Date();
             database.tokens.forEach(token => {
-                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : (token.exit ? calculateCost(token.entry, token.exit, token.passType || 'hourly') : calculateCost(token.entry, now, token.passType || 'hourly'));
+                const cost = token.passType === 'monthly'
+                    ? database.costs.monthlyPassPrice
+                    : (token.exit ? calculateCost(token.entry, token.exit, token.vehicleType || 'bike', token.passType || 'hourly') : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly'));
                 const entryDisplay = token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString();
                 const exitDisplay = token.exit ? (token.passType === 'monthly' ? token.exit.toLocaleDateString('en-IN') : token.exit.toLocaleTimeString()) : 'Active';
-                
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
                     <td>${token.vehicle}</td>
+                    <td>${token.vehicleType === 'car' ? 'Car' : 'Bike'}</td>
                     <td>${entryDisplay}</td>
                     <td>${exitDisplay}</td>
                     <td><span class="status-badge ${token.status === 'active' ? 'status-active' : 'status-completed'}">${token.status.charAt(0).toUpperCase() + token.status.slice(1)}</span></td>
@@ -963,13 +1142,14 @@
         function renderHistoryTable() {
             const body = document.getElementById('historyBody');
             body.innerHTML = '';
-            
+
             database.history.forEach(entry => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${entry.date}</td>
                     <td><span class="token-badge">#${entry.id}</span></td>
                     <td>${entry.vehicle}</td>
+                    <td>${entry.vehicleType === 'car' ? 'Car' : 'Bike'}</td>
                     <td>${entry.entry}</td>
                     <td>${entry.exit}</td>
                     <td>${entry.duration}</td>
@@ -980,24 +1160,27 @@
             });
         }
 
-        // Update stats
         function updateStats() {
             const now = new Date();
             const activeTokens = database.tokens.filter(t => t.status === 'active').length;
             let totalRevenue = 0;
-            
+
             database.tokens.forEach(token => {
                 const exitTime = token.exit || now;
-                totalRevenue += calculateCost(token.entry, exitTime);
+                totalRevenue += calculateCost(token.entry, exitTime, token.vehicleType || 'bike', token.passType || 'hourly');
             });
 
             document.getElementById('activeTokensCount').textContent = activeTokens;
             document.getElementById('parkedVehiclesCount').textContent = activeTokens;
             document.getElementById('todayTotalCount').textContent = database.tokens.length;
             document.getElementById('todayRevenue').textContent = '₹' + totalRevenue;
+
+            const revenueCard = document.querySelector('.stat-card.revenue');
+            if (revenueCard) {
+                revenueCard.style.display = canAccess('view-revenue') ? 'block' : 'none';
+            }
         }
 
-        // Modal functions
         function toggleMonthlyPassFields() {
             const passType = document.getElementById('passType').value;
             const monthlyFields = document.getElementById('monthlyPassFields');
@@ -1014,16 +1197,29 @@
         }
 
         function showCreateTokenModal() {
+            if (!canAccess('issue-token')) {
+                alert('You do not have permission to create parking tokens.');
+                return;
+            }
+
             document.getElementById('createTokenModal').classList.add('show');
             document.getElementById('passType').value = 'hourly';
+            document.getElementById('vehicleType').value = 'bike';
             toggleMonthlyPassFields();
             document.getElementById('vehicleNumber').focus();
         }
 
         function showCostModal() {
+            if (!canAccess('edit-costs')) {
+                alert('You do not have permission to edit pricing.');
+                return;
+            }
+
             document.getElementById('costModal').classList.add('show');
-            document.getElementById('newHourlyRate').value = database.costs.hourlyRate;
-            document.getElementById('newMaxCharge').value = database.costs.maxCharge;
+            document.getElementById('newBikeHourlyRate').value = database.costs.bike.hourlyRate;
+            document.getElementById('newBikeDailyRate').value = database.costs.bike.dailyMax;
+            document.getElementById('newCarHourlyRate').value = database.costs.car.hourlyRate;
+            document.getElementById('newCarDailyRate').value = database.costs.car.dailyMax;
             document.getElementById('newMonthlyPassRate').value = database.costs.monthlyPassPrice;
             document.getElementById('newGracePeriod').value = database.costs.gracePeriod;
         }
@@ -1039,6 +1235,7 @@
             const driverName = document.getElementById('driverName').value;
             const driverPhone = document.getElementById('driverPhone').value;
             const spot = document.getElementById('parkingSpot').value;
+            const vehicleType = document.getElementById('vehicleType').value;
             const passType = document.getElementById('passType').value;
             const lockedInDateValue = document.getElementById('lockedInDate').value;
 
@@ -1057,38 +1254,33 @@
             const newToken = {
                 id: tokenId,
                 vehicle: vehicleNo,
+                vehicleType,
                 entry: entryDate,
                 exit: null,
-                spot: spot,
+                spot,
                 driver: driverName,
                 phone: driverPhone,
                 status: 'active',
-                passType: passType,
+                passType,
                 lockedInDate: passType === 'monthly' ? lockDateString(lockedInDateValue) : null,
                 expiryDate: passType === 'monthly' ? getMonthlyExpiryDate(entryDate) : null
             };
 
             database.tokens.push(newToken);
-            
-            // Show success message
             document.getElementById('successMessage').classList.add('show');
-            
-            // Clear form
+
             document.getElementById('vehicleNumber').value = '';
             document.getElementById('driverName').value = '';
             document.getElementById('driverPhone').value = '';
             document.getElementById('parkingSpot').value = '';
             document.getElementById('passType').value = 'hourly';
+            document.getElementById('vehicleType').value = 'bike';
             document.getElementById('lockedInDate').value = '';
             toggleMonthlyPassFields();
 
-            // Update displays
             updateAllTables();
             updateStats();
-
-            setTimeout(() => {
-                closeModal('createTokenModal');
-            }, 2000);
+            setTimeout(() => closeModal('createTokenModal'), 2000);
         }
 
         function lockDateString(dateString) {
@@ -1100,41 +1292,45 @@
             if (token) {
                 token.status = 'completed';
                 token.exit = new Date();
-                
-                // Add to history
-                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, token.exit, token.passType || 'hourly');
+
+                const cost = token.passType === 'monthly'
+                    ? database.costs.monthlyPassPrice
+                    : calculateCost(token.entry, token.exit, token.vehicleType || 'bike', token.passType || 'hourly');
+
                 database.history.unshift({
                     date: new Date().toLocaleDateString('en-IN'),
                     id: token.id,
                     vehicle: token.vehicle,
+                    vehicleType: token.vehicleType || 'bike',
                     entry: token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString(),
                     exit: token.passType === 'monthly' ? token.exit.toLocaleDateString('en-IN') : token.exit.toLocaleTimeString(),
                     duration: token.passType === 'monthly' ? '30d pass' : formatDuration(Math.floor((token.exit - token.entry) / 60000)),
                     amount: cost,
                     status: 'Completed'
                 });
-                
+
                 updateAllTables();
                 updateStats();
             }
         }
 
         function updateCosts() {
-            database.costs.hourlyRate = parseInt(document.getElementById('newHourlyRate').value) || 0;
-            database.costs.maxCharge = parseInt(document.getElementById('newMaxCharge').value) || 0;
+            database.costs.bike.hourlyRate = parseInt(document.getElementById('newBikeHourlyRate').value) || 0;
+            database.costs.bike.dailyMax = parseInt(document.getElementById('newBikeDailyRate').value) || 0;
+            database.costs.car.hourlyRate = parseInt(document.getElementById('newCarHourlyRate').value) || 0;
+            database.costs.car.dailyMax = parseInt(document.getElementById('newCarDailyRate').value) || 0;
             database.costs.monthlyPassPrice = parseInt(document.getElementById('newMonthlyPassRate').value) || 0;
             database.costs.gracePeriod = parseInt(document.getElementById('newGracePeriod').value) || 0;
 
-            document.getElementById('hourlyRate').textContent = database.costs.hourlyRate;
-            document.getElementById('maxCharge').textContent = database.costs.maxCharge;
+            document.getElementById('bikeHourlyRate').textContent = database.costs.bike.hourlyRate;
+            document.getElementById('bikeDailyRate').textContent = database.costs.bike.dailyMax;
+            document.getElementById('carHourlyRate').textContent = database.costs.car.hourlyRate;
+            document.getElementById('carDailyRate').textContent = database.costs.car.dailyMax;
             document.getElementById('monthlyPassRate').textContent = database.costs.monthlyPassPrice;
             document.getElementById('gracePeriod').textContent = database.costs.gracePeriod;
 
             document.getElementById('costSuccessMessage').classList.add('show');
-            setTimeout(() => {
-                closeModal('costModal');
-            }, 2000);
-
+            setTimeout(() => closeModal('costModal'), 2000);
             updateAllTables();
         }
 
@@ -1146,37 +1342,44 @@
         }
 
         function switchTab(tabName) {
-            // Hide all sections
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-            
-            // Remove active class from buttons
+
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
-            // Show selected section
-            document.getElementById(tabName).classList.add('active');
-            
-            // Add active class to button
-            event.target.classList.add('active');
+
+            const target = document.getElementById(tabName);
+            if (target) target.classList.add('active');
+
+            const activeButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+            if (activeButton) activeButton.classList.add('active');
         }
 
-        // Close modal when clicking outside
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 e.target.classList.remove('show');
             }
         });
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             initializeSampleData();
+            const savedSession = JSON.parse(localStorage.getItem('railwayTokenSession') || 'null');
+            if (savedSession) {
+                const existingUser = database.users.find(user => user.username === savedSession.username);
+                if (existingUser) {
+                    database.currentUser = existingUser;
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                }
+            }
+
+            renderAccessControls();
             updateAllTables();
             updateStats();
+            switchTab('overview');
 
-            // Auto-update every 10 seconds
             setInterval(() => {
                 updateAllTables();
                 updateStats();
