@@ -612,15 +612,15 @@
                 <div class="cost-section">
                     <div class="cost-item">
                         <h4>Hourly Rate</h4>
-                        <div class="cost-value">₹<span id="hourlyRate">50</span></div>
+                        <div class="cost-value">₹<span id="hourlyRate">20</span></div>
                     </div>
                     <div class="cost-item">
-                        <h4>Per Vehicle (Fixed)</h4>
-                        <div class="cost-value">₹<span id="fixedCost">20</span></div>
+                        <h4>Daily Max Charge</h4>
+                        <div class="cost-value">₹<span id="maxCharge">100</span></div>
                     </div>
                     <div class="cost-item">
-                        <h4>Max Daily Charge</h4>
-                        <div class="cost-value">₹<span id="maxCharge">500</span></div>
+                        <h4>Monthly Pass (30 Days)</h4>
+                        <div class="cost-value">₹<span id="monthlyPassRate">2000</span></div>
                     </div>
                     <div class="cost-item">
                         <h4>Grace Period</h4>
@@ -702,6 +702,19 @@
                 <label>Driver Phone</label>
                 <input type="text" id="driverPhone" placeholder="Enter phone number" required>
             </div>
+            <div class="form-group">
+                <label>Pass Type</label>
+                <select id="passType" onchange="toggleMonthlyPassFields()">
+                    <option value="hourly">Daily / Hourly</option>
+                    <option value="monthly">Monthly Pass</option>
+                </select>
+            </div>
+            <div id="monthlyPassFields" style="display: none;">
+                <div class="form-group">
+                    <label>Locked-in Date</label>
+                    <input type="date" id="lockedInDate" required>
+                </div>
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Parking Spot</label>
@@ -729,12 +742,12 @@
                 <input type="number" id="newHourlyRate" min="0" step="5" required>
             </div>
             <div class="form-group">
-                <label>Per Vehicle Fixed Cost (₹)</label>
-                <input type="number" id="newFixedCost" min="0" step="5" required>
-            </div>
-            <div class="form-group">
                 <label>Maximum Daily Charge (₹)</label>
                 <input type="number" id="newMaxCharge" min="0" step="10" required>
+            </div>
+            <div class="form-group">
+                <label>Monthly Pass Price (₹)</label>
+                <input type="number" id="newMonthlyPassRate" min="0" step="50" required>
             </div>
             <div class="form-group">
                 <label>Grace Period (Minutes)</label>
@@ -748,9 +761,10 @@
         // Mock database
         let database = {
             costs: {
-                hourlyRate: 50,
-                fixedCost: 20,
-                maxCharge: 500,
+                hourlyRate: 20,
+                fixedCost: 0,
+                maxCharge: 100,
+                monthlyPassPrice: 2000,
                 gracePeriod: 15
             },
             tokens: [],
@@ -821,7 +835,11 @@
         }
 
         // Calculate parking cost
-        function calculateCost(entryTime, exitTime) {
+        function calculateCost(entryTime, exitTime, passType = 'hourly') {
+            if (passType === 'monthly') {
+                return database.costs.monthlyPassPrice;
+            }
+
             const minutesDiff = (exitTime - entryTime) / (1000 * 60);
             const hoursDiff = minutesDiff / 60;
             
@@ -833,6 +851,12 @@
             return Math.min(totalCharge, database.costs.maxCharge);
         }
 
+        function getMonthlyExpiryDate(startDate) {
+            const expiry = new Date(startDate);
+            expiry.setDate(expiry.getDate() + 30);
+            return expiry;
+        }
+
         // Format duration
         function formatDuration(minutes) {
             const hours = Math.floor(minutes / 60);
@@ -842,7 +866,14 @@
         }
 
         // Get current duration
-        function getCurrentDuration(entryTime) {
+        function getCurrentDuration(entryTime, passType = 'hourly') {
+            if (passType === 'monthly') {
+                const expiryDate = getMonthlyExpiryDate(entryTime);
+                const now = new Date();
+                const remainingDays = Math.max(0, Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24)));
+                return `${remainingDays}d remaining`;
+            }
+
             const now = new Date();
             const minutes = Math.floor((now - entryTime) / (1000 * 60));
             return formatDuration(minutes);
@@ -855,17 +886,17 @@
             
             const now = new Date();
             database.tokens.filter(t => t.status === 'active').forEach(token => {
-                const cost = calculateCost(token.entry, now);
-                const duration = getCurrentDuration(token.entry);
+                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, token.passType || 'hourly');
+                const duration = getCurrentDuration(token.entry, token.passType || 'hourly');
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
                     <td>${token.vehicle}</td>
-                    <td>${token.entry.toLocaleTimeString()}</td>
+                    <td>${token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString()}</td>
                     <td>${duration}</td>
                     <td>₹${cost}</td>
-                    <td><span class="status-badge status-active">Active</span></td>
+                    <td><span class="status-badge status-active">${token.passType === 'monthly' ? 'Monthly Pass' : 'Active'}</span></td>
                     <td>
                         <button class="action-btn btn-success" onclick="completeToken('${token.id}')">Exit</button>
                     </td>
@@ -880,17 +911,18 @@
             
             const now = new Date();
             database.tokens.filter(t => t.status === 'active').forEach(token => {
-                const cost = calculateCost(token.entry, now);
+                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, token.passType || 'hourly');
                 const minutes = Math.floor((now - token.entry) / (1000 * 60));
                 const hours = (minutes / 60).toFixed(1);
+                const duration = token.passType === 'monthly' ? `30d` : `${hours}h`;
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
                     <td>${token.vehicle}</td>
                     <td>${token.spot}</td>
-                    <td>${token.entry.toLocaleTimeString()}</td>
-                    <td>${hours}h</td>
+                    <td>${token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString()}</td>
+                    <td>${duration}</td>
                     <td>₹${cost}</td>
                     <td>${token.driver}</td>
                     <td>
@@ -908,14 +940,16 @@
             
             const now = new Date();
             database.tokens.forEach(token => {
-                const cost = token.exit ? calculateCost(token.entry, token.exit) : calculateCost(token.entry, now);
+                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : (token.exit ? calculateCost(token.entry, token.exit, token.passType || 'hourly') : calculateCost(token.entry, now, token.passType || 'hourly'));
+                const entryDisplay = token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString();
+                const exitDisplay = token.exit ? (token.passType === 'monthly' ? token.exit.toLocaleDateString('en-IN') : token.exit.toLocaleTimeString()) : 'Active';
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
                     <td>${token.vehicle}</td>
-                    <td>${token.entry.toLocaleTimeString()}</td>
-                    <td>${token.exit ? token.exit.toLocaleTimeString() : 'Active'}</td>
+                    <td>${entryDisplay}</td>
+                    <td>${exitDisplay}</td>
                     <td><span class="status-badge ${token.status === 'active' ? 'status-active' : 'status-completed'}">${token.status.charAt(0).toUpperCase() + token.status.slice(1)}</span></td>
                     <td>₹${cost}</td>
                     <td>
@@ -964,16 +998,33 @@
         }
 
         // Modal functions
+        function toggleMonthlyPassFields() {
+            const passType = document.getElementById('passType').value;
+            const monthlyFields = document.getElementById('monthlyPassFields');
+            const lockedDateInput = document.getElementById('lockedInDate');
+
+            if (passType === 'monthly') {
+                monthlyFields.style.display = 'block';
+                if (!lockedDateInput.value) {
+                    lockedDateInput.value = new Date().toISOString().split('T')[0];
+                }
+            } else {
+                monthlyFields.style.display = 'none';
+            }
+        }
+
         function showCreateTokenModal() {
             document.getElementById('createTokenModal').classList.add('show');
+            document.getElementById('passType').value = 'hourly';
+            toggleMonthlyPassFields();
             document.getElementById('vehicleNumber').focus();
         }
 
         function showCostModal() {
             document.getElementById('costModal').classList.add('show');
             document.getElementById('newHourlyRate').value = database.costs.hourlyRate;
-            document.getElementById('newFixedCost').value = database.costs.fixedCost;
             document.getElementById('newMaxCharge').value = database.costs.maxCharge;
+            document.getElementById('newMonthlyPassRate').value = database.costs.monthlyPassPrice;
             document.getElementById('newGracePeriod').value = database.costs.gracePeriod;
         }
 
@@ -988,22 +1039,33 @@
             const driverName = document.getElementById('driverName').value;
             const driverPhone = document.getElementById('driverPhone').value;
             const spot = document.getElementById('parkingSpot').value;
+            const passType = document.getElementById('passType').value;
+            const lockedInDateValue = document.getElementById('lockedInDate').value;
 
             if (!vehicleNo || !driverName || !driverPhone || !spot) {
                 alert('Please fill all fields');
                 return;
             }
 
+            if (passType === 'monthly' && !lockedInDateValue) {
+                alert('Please choose the locked-in date for a monthly pass');
+                return;
+            }
+
             const tokenId = 'A-' + (database.tokens.length + 100);
+            const entryDate = passType === 'monthly' ? new Date(`${lockedInDateValue}T00:00:00`) : new Date();
             const newToken = {
                 id: tokenId,
                 vehicle: vehicleNo,
-                entry: new Date(),
+                entry: entryDate,
                 exit: null,
                 spot: spot,
                 driver: driverName,
                 phone: driverPhone,
-                status: 'active'
+                status: 'active',
+                passType: passType,
+                lockedInDate: passType === 'monthly' ? lockDateString(lockedInDateValue) : null,
+                expiryDate: passType === 'monthly' ? getMonthlyExpiryDate(entryDate) : null
             };
 
             database.tokens.push(newToken);
@@ -1016,6 +1078,9 @@
             document.getElementById('driverName').value = '';
             document.getElementById('driverPhone').value = '';
             document.getElementById('parkingSpot').value = '';
+            document.getElementById('passType').value = 'hourly';
+            document.getElementById('lockedInDate').value = '';
+            toggleMonthlyPassFields();
 
             // Update displays
             updateAllTables();
@@ -1026,6 +1091,10 @@
             }, 2000);
         }
 
+        function lockDateString(dateString) {
+            return dateString ? new Date(`${dateString}T00:00:00`).toISOString().split('T')[0] : null;
+        }
+
         function completeToken(tokenId) {
             const token = database.tokens.find(t => t.id === tokenId);
             if (token) {
@@ -1033,14 +1102,14 @@
                 token.exit = new Date();
                 
                 // Add to history
-                const cost = calculateCost(token.entry, token.exit);
+                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, token.exit, token.passType || 'hourly');
                 database.history.unshift({
                     date: new Date().toLocaleDateString('en-IN'),
                     id: token.id,
                     vehicle: token.vehicle,
-                    entry: token.entry.toLocaleTimeString(),
-                    exit: token.exit.toLocaleTimeString(),
-                    duration: formatDuration(Math.floor((token.exit - token.entry) / 60000)),
+                    entry: token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString(),
+                    exit: token.passType === 'monthly' ? token.exit.toLocaleDateString('en-IN') : token.exit.toLocaleTimeString(),
+                    duration: token.passType === 'monthly' ? '30d pass' : formatDuration(Math.floor((token.exit - token.entry) / 60000)),
                     amount: cost,
                     status: 'Completed'
                 });
@@ -1051,14 +1120,14 @@
         }
 
         function updateCosts() {
-            database.costs.hourlyRate = parseInt(document.getElementById('newHourlyRate').value);
-            database.costs.fixedCost = parseInt(document.getElementById('newFixedCost').value);
-            database.costs.maxCharge = parseInt(document.getElementById('newMaxCharge').value);
-            database.costs.gracePeriod = parseInt(document.getElementById('newGracePeriod').value);
+            database.costs.hourlyRate = parseInt(document.getElementById('newHourlyRate').value) || 0;
+            database.costs.maxCharge = parseInt(document.getElementById('newMaxCharge').value) || 0;
+            database.costs.monthlyPassPrice = parseInt(document.getElementById('newMonthlyPassRate').value) || 0;
+            database.costs.gracePeriod = parseInt(document.getElementById('newGracePeriod').value) || 0;
 
             document.getElementById('hourlyRate').textContent = database.costs.hourlyRate;
-            document.getElementById('fixedCost').textContent = database.costs.fixedCost;
             document.getElementById('maxCharge').textContent = database.costs.maxCharge;
+            document.getElementById('monthlyPassRate').textContent = database.costs.monthlyPassPrice;
             document.getElementById('gracePeriod').textContent = database.costs.gracePeriod;
 
             document.getElementById('costSuccessMessage').classList.add('show');
