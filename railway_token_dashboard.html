@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Station Token System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .leaf-icon {
+            font-size: 32px;
+            color: #16a34a;
+        }
+
+        .admin-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .tab-btn {
+            padding: 10px 18px;
+            border: none;
+            background: #f3f4f6;
+            color: #374151;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #e5e7eb;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-card.parking {
+            border-left-color: #10b981;
+        }
+
+        .stat-card.vehicles {
+            border-left-color: #f59e0b;
+        }
+
+        .stat-card.revenue {
+            border-left-color: #ef4444;
+        }
+
+        .stat-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .stat-detail {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1f2937;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #f9fafb;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .token-badge {
+            background: #16a34a;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-completed {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .action-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            margin-right: 6px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #f9fafb;
+            transition: border 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .modal-close:hover {
+            color: #1f2937;
+        }
+
+        .cost-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .cost-item {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .cost-item h4 {
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .cost-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .success-message {
+            background: #dcfce7;
+            border-left: 4px solid #16a34a;
+            padding: 15px;
+            border-radius: 8px;
+            color: #166534;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease-in;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 28px;
+            }
+
+            .main-card {
+                padding: 20px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .action-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+
+            .card-title {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-title">
+                <span class="leaf-icon">🚂</span>
+                <h1>Railway Token System</h1>
+                <span class="admin-badge">ADMIN</span>
+            </div>
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+                <button class="tab-btn" onclick="switchTab('parking')">Parking</button>
+                <button class="tab-btn" onclick="switchTab('tokens')">Tokens</button>
+                <button class="tab-btn" onclick="switchTab('costs')">Costs</button>
+                <button class="tab-btn" onclick="switchTab('history')">History</button>
+            </div>
+        </header>
+
+        <!-- Overview Section -->
+        <div id="overview" class="content-section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🎫</div>
+                    <div class="stat-label">Active Tokens</div>
+                    <div class="stat-value" id="activeTokensCount">0</div>
+                    <div class="stat-detail">Currently in use</div>
+                </div>
+                <div class="stat-card parking">
+                    <div class="stat-icon">🚗</div>
+                    <div class="stat-label">Parked Vehicles</div>
+                    <div class="stat-value" id="parkedVehiclesCount">0</div>
+                    <div class="stat-detail">At parking spot</div>
+                </div>
+                <div class="stat-card vehicles">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-label">Today's Total</div>
+                    <div class="stat-value" id="todayTotalCount">0</div>
+                    <div class="stat-detail">Vehicles passed today</div>
+                </div>
+                <div class="stat-card revenue">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-label">Today's Revenue</div>
+                    <div class="stat-value" id="todayRevenue">₹0</div>
+                    <div class="stat-detail">Total earnings</div>
+                </div>
+            </div>
+
+            <div class="main-card">
+                <div class="card-title">
+                    Active Tokens
+                    <button class="action-btn btn-primary" onclick="showCreateTokenModal()">+ Create Token</button>
+                </div>
+                <div class="table-wrapper">
+                    <table id="activeTokensTable">
+                        <thead>
+                            <tr>
+                                <th>Token No</th>
+                                <th>Vehicle No</th>
+                                <th>Entry Time</th>
+                                <th>Duration</th>
+                                <th>Cost</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeTokensBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parking Section -->
+        <div id="parking" class="content-section">
+            <div class="main-card">
+                <div class="card-title">
+                    Parking Management
+                    <input type="text" class="search-box" placeholder="Search vehicle or spot..." id="parkingSearch">
+                </div>
+                <div class="table-wrapper">
+                    <table id="parkingTable">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Vehicle No</th>
+                                <th>Spot No</th>
+                                <th>Entry Time</th>
+                                <th>Hours</th>
+                                <th>Cost</th>
+                                <th>Driver</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="parkingBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tokens Section -->
+        <div id="tokens" class="content-section">
+            <div class="main-card">
+                <div class="card-title">
+                    Token Management
+                    <button class="action-btn btn-primary" onclick="showCreateTokenModal()">+ Issue New Token</button>
+                </div>
+                <div class="table-wrapper">
+                    <table id="tokensTable">
+                        <thead>
+                            <tr>
+                                <th>Token ID</th>
+                                <th>Vehicle</th>
+                                <th>Entry</th>
+                                <th>Exit</th>
+                                <th>Status</th>
+                                <th>Charges</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tokensBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Costs Section -->
+        <div id="costs" class="content-section">
+            <div class="main-card">
+                <div class="card-title">
+                    Cost Configuration
+                    <button class="action-btn btn-primary" onclick="showCostModal()">Edit Rates</button>
+                </div>
+                <div class="cost-section">
+                    <div class="cost-item">
+                        <h4>Hourly Rate</h4>
+                        <div class="cost-value">₹<span id="hourlyRate">50</span></div>
+                    </div>
+                    <div class="cost-item">
+                        <h4>Per Vehicle (Fixed)</h4>
+                        <div class="cost-value">₹<span id="fixedCost">20</span></div>
+                    </div>
+                    <div class="cost-item">
+                        <h4>Max Daily Charge</h4>
+                        <div class="cost-value">₹<span id="maxCharge">500</span></div>
+                    </div>
+                    <div class="cost-item">
+                        <h4>Grace Period</h4>
+                        <div class="cost-value"><span id="gracePeriod">15</span> min</div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 20px; color: #1f2937;">Recent Cost Updates</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Parameter</th>
+                                    <th>Old Value</th>
+                                    <th>New Value</th>
+                                    <th>Updated By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="costHistoryBody">
+                                <tr>
+                                    <td>2026-09-24</td>
+                                    <td>Hourly Rate</td>
+                                    <td>₹40</td>
+                                    <td>₹50</td>
+                                    <td>Admin</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div id="history" class="content-section">
+            <div class="main-card">
+                <div class="card-title">
+                    Complete History
+                    <input type="text" class="search-box" placeholder="Search transactions..." id="historySearch">
+                </div>
+                <div class="table-wrapper">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Token</th>
+                                <th>Vehicle</th>
+                                <th>Entry</th>
+                                <th>Exit</th>
+                                <th>Duration</th>
+                                <th>Amount Paid</th>
+                                <th>Payment Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Token Modal -->
+    <div id="createTokenModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('createTokenModal')">&times;</button>
+            <div class="modal-header">Create New Token</div>
+            <div class="success-message" id="successMessage">✓ Token created successfully!</div>
+            <div class="form-group">
+                <label>Vehicle Number</label>
+                <input type="text" id="vehicleNumber" placeholder="e.g., MH-12-AB-3498" required>
+            </div>
+            <div class="form-group">
+                <label>Driver Name</label>
+                <input type="text" id="driverName" placeholder="Enter driver name" required>
+            </div>
+            <div class="form-group">
+                <label>Driver Phone</label>
+                <input type="text" id="driverPhone" placeholder="Enter phone number" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Parking Spot</label>
+                    <select id="parkingSpot" required>
+                        <option value="">Select spot</option>
+                        <option value="A-1">Spot A-1</option>
+                        <option value="A-2">Spot A-2</option>
+                        <option value="B-1">Spot B-1</option>
+                        <option value="B-2">Spot B-2</option>
+                    </select>
+                </div>
+            </div>
+            <button class="action-btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="createToken()">Issue Token</button>
+        </div>
+    </div>
+
+    <!-- Cost Configuration Modal -->
+    <div id="costModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('costModal')">&times;</button>
+            <div class="modal-header">Edit Cost Configuration</div>
+            <div class="success-message" id="costSuccessMessage">✓ Costs updated successfully!</div>
+            <div class="form-group">
+                <label>Hourly Rate (₹)</label>
+                <input type="number" id="newHourlyRate" min="0" step="5" required>
+            </div>
+            <div class="form-group">
+                <label>Per Vehicle Fixed Cost (₹)</label>
+                <input type="number" id="newFixedCost" min="0" step="5" required>
+            </div>
+            <div class="form-group">
+                <label>Maximum Daily Charge (₹)</label>
+                <input type="number" id="newMaxCharge" min="0" step="10" required>
+            </div>
+            <div class="form-group">
+                <label>Grace Period (Minutes)</label>
+                <input type="number" id="newGracePeriod" min="0" step="5" required>
+            </div>
+            <button class="action-btn btn-success" style="width: 100%; margin-top: 20px;" onclick="updateCosts()">Update Rates</button>
+        </div>
+    </div>
+
+    <script>
+        // Mock database
+        let database = {
+            costs: {
+                hourlyRate: 50,
+                fixedCost: 20,
+                maxCharge: 500,
+                gracePeriod: 15
+            },
+            tokens: [],
+            history: []
+        };
+
+        // Generate sample data
+        function initializeSampleData() {
+            const now = new Date();
+            
+            // Add some sample active tokens
+            database.tokens = [
+                {
+                    id: 'A-102',
+                    vehicle: 'MH-12-BT-3498',
+                    entry: new Date(now - 45 * 60000),
+                    exit: null,
+                    spot: 'A-1',
+                    driver: 'Raj Kumar',
+                    phone: '9876543210',
+                    status: 'active'
+                },
+                {
+                    id: 'A-103',
+                    vehicle: 'MH-02-CD-5678',
+                    entry: new Date(now - 120 * 60000),
+                    exit: null,
+                    spot: 'B-1',
+                    driver: 'Priya Singh',
+                    phone: '9876543211',
+                    status: 'active'
+                },
+                {
+                    id: 'A-101',
+                    vehicle: 'MH-15-EF-2341',
+                    entry: new Date(now - 240 * 60000),
+                    exit: null,
+                    spot: 'A-2',
+                    driver: 'Amit Patel',
+                    phone: '9876543212',
+                    status: 'active'
+                }
+            ];
+
+            // Add historical data
+            database.history = [
+                {
+                    date: '2026-09-24',
+                    id: 'A-100',
+                    vehicle: 'MH-12-XY-1234',
+                    entry: '08:30 AM',
+                    exit: '10:15 AM',
+                    duration: '1h 45m',
+                    amount: 110,
+                    status: 'Completed'
+                },
+                {
+                    date: '2026-09-24',
+                    id: 'A-99',
+                    vehicle: 'KA-05-GH-4567',
+                    entry: '07:00 AM',
+                    exit: '09:30 AM',
+                    duration: '2h 30m',
+                    amount: 145,
+                    status: 'Completed'
+                }
+            ];
+        }
+
+        // Calculate parking cost
+        function calculateCost(entryTime, exitTime) {
+            const minutesDiff = (exitTime - entryTime) / (1000 * 60);
+            const hoursDiff = minutesDiff / 60;
+            
+            if (minutesDiff <= database.costs.gracePeriod) return 0;
+            
+            const hourlyCharge = Math.ceil(hoursDiff) * database.costs.hourlyRate;
+            const totalCharge = database.costs.fixedCost + hourlyCharge;
+            
+            return Math.min(totalCharge, database.costs.maxCharge);
+        }
+
+        // Format duration
+        function formatDuration(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            if (hours === 0) return `${mins}m`;
+            return `${hours}h ${mins}m`;
+        }
+
+        // Get current duration
+        function getCurrentDuration(entryTime) {
+            const now = new Date();
+            const minutes = Math.floor((now - entryTime) / (1000 * 60));
+            return formatDuration(minutes);
+        }
+
+        // Render tables
+        function renderActiveTokens() {
+            const body = document.getElementById('activeTokensBody');
+            body.innerHTML = '';
+            
+            const now = new Date();
+            database.tokens.filter(t => t.status === 'active').forEach(token => {
+                const cost = calculateCost(token.entry, now);
+                const duration = getCurrentDuration(token.entry);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="token-badge">#${token.id}</span></td>
+                    <td>${token.vehicle}</td>
+                    <td>${token.entry.toLocaleTimeString()}</td>
+                    <td>${duration}</td>
+                    <td>₹${cost}</td>
+                    <td><span class="status-badge status-active">Active</span></td>
+                    <td>
+                        <button class="action-btn btn-success" onclick="completeToken('${token.id}')">Exit</button>
+                    </td>
+                `;
+                body.appendChild(row);
+            });
+        }
+
+        function renderParkingTable() {
+            const body = document.getElementById('parkingBody');
+            body.innerHTML = '';
+            
+            const now = new Date();
+            database.tokens.filter(t => t.status === 'active').forEach(token => {
+                const cost = calculateCost(token.entry, now);
+                const minutes = Math.floor((now - token.entry) / (1000 * 60));
+                const hours = (minutes / 60).toFixed(1);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="token-badge">#${token.id}</span></td>
+                    <td>${token.vehicle}</td>
+                    <td>${token.spot}</td>
+                    <td>${token.entry.toLocaleTimeString()}</td>
+                    <td>${hours}h</td>
+                    <td>₹${cost}</td>
+                    <td>${token.driver}</td>
+                    <td>
+                        <button class="action-btn btn-secondary" onclick="editParking('${token.id}')">Edit</button>
+                        <button class="action-btn btn-success" onclick="completeToken('${token.id}')">Exit</button>
+                    </td>
+                `;
+                body.appendChild(row);
+            });
+        }
+
+        function renderTokensTable() {
+            const body = document.getElementById('tokensBody');
+            body.innerHTML = '';
+            
+            const now = new Date();
+            database.tokens.forEach(token => {
+                const cost = token.exit ? calculateCost(token.entry, token.exit) : calculateCost(token.entry, now);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="token-badge">#${token.id}</span></td>
+                    <td>${token.vehicle}</td>
+                    <td>${token.entry.toLocaleTimeString()}</td>
+                    <td>${token.exit ? token.exit.toLocaleTimeString() : 'Active'}</td>
+                    <td><span class="status-badge ${token.status === 'active' ? 'status-active' : 'status-completed'}">${token.status.charAt(0).toUpperCase() + token.status.slice(1)}</span></td>
+                    <td>₹${cost}</td>
+                    <td>
+                        ${token.status === 'active' ? `<button class="action-btn btn-success" onclick="completeToken('${token.id}')">Complete</button>` : '<span>—</span>'}
+                    </td>
+                `;
+                body.appendChild(row);
+            });
+        }
+
+        function renderHistoryTable() {
+            const body = document.getElementById('historyBody');
+            body.innerHTML = '';
+            
+            database.history.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td><span class="token-badge">#${entry.id}</span></td>
+                    <td>${entry.vehicle}</td>
+                    <td>${entry.entry}</td>
+                    <td>${entry.exit}</td>
+                    <td>${entry.duration}</td>
+                    <td>₹${entry.amount}</td>
+                    <td><span class="status-badge status-completed">${entry.status}</span></td>
+                `;
+                body.appendChild(row);
+            });
+        }
+
+        // Update stats
+        function updateStats() {
+            const now = new Date();
+            const activeTokens = database.tokens.filter(t => t.status === 'active').length;
+            let totalRevenue = 0;
+            
+            database.tokens.forEach(token => {
+                const exitTime = token.exit || now;
+                totalRevenue += calculateCost(token.entry, exitTime);
+            });
+
+            document.getElementById('activeTokensCount').textContent = activeTokens;
+            document.getElementById('parkedVehiclesCount').textContent = activeTokens;
+            document.getElementById('todayTotalCount').textContent = database.tokens.length;
+            document.getElementById('todayRevenue').textContent = '₹' + totalRevenue;
+        }
+
+        // Modal functions
+        function showCreateTokenModal() {
+            document.getElementById('createTokenModal').classList.add('show');
+            document.getElementById('vehicleNumber').focus();
+        }
+
+        function showCostModal() {
+            document.getElementById('costModal').classList.add('show');
+            document.getElementById('newHourlyRate').value = database.costs.hourlyRate;
+            document.getElementById('newFixedCost').value = database.costs.fixedCost;
+            document.getElementById('newMaxCharge').value = database.costs.maxCharge;
+            document.getElementById('newGracePeriod').value = database.costs.gracePeriod;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            document.getElementById('successMessage').classList.remove('show');
+            document.getElementById('costSuccessMessage').classList.remove('show');
+        }
+
+        function createToken() {
+            const vehicleNo = document.getElementById('vehicleNumber').value;
+            const driverName = document.getElementById('driverName').value;
+            const driverPhone = document.getElementById('driverPhone').value;
+            const spot = document.getElementById('parkingSpot').value;
+
+            if (!vehicleNo || !driverName || !driverPhone || !spot) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            const tokenId = 'A-' + (database.tokens.length + 100);
+            const newToken = {
+                id: tokenId,
+                vehicle: vehicleNo,
+                entry: new Date(),
+                exit: null,
+                spot: spot,
+                driver: driverName,
+                phone: driverPhone,
+                status: 'active'
+            };
+
+            database.tokens.push(newToken);
+            
+            // Show success message
+            document.getElementById('successMessage').classList.add('show');
+            
+            // Clear form
+            document.getElementById('vehicleNumber').value = '';
+            document.getElementById('driverName').value = '';
+            document.getElementById('driverPhone').value = '';
+            document.getElementById('parkingSpot').value = '';
+
+            // Update displays
+            updateAllTables();
+            updateStats();
+
+            setTimeout(() => {
+                closeModal('createTokenModal');
+            }, 2000);
+        }
+
+        function completeToken(tokenId) {
+            const token = database.tokens.find(t => t.id === tokenId);
+            if (token) {
+                token.status = 'completed';
+                token.exit = new Date();
+                
+                // Add to history
+                const cost = calculateCost(token.entry, token.exit);
+                database.history.unshift({
+                    date: new Date().toLocaleDateString('en-IN'),
+                    id: token.id,
+                    vehicle: token.vehicle,
+                    entry: token.entry.toLocaleTimeString(),
+                    exit: token.exit.toLocaleTimeString(),
+                    duration: formatDuration(Math.floor((token.exit - token.entry) / 60000)),
+                    amount: cost,
+                    status: 'Completed'
+                });
+                
+                updateAllTables();
+                updateStats();
+            }
+        }
+
+        function updateCosts() {
+            database.costs.hourlyRate = parseInt(document.getElementById('newHourlyRate').value);
+            database.costs.fixedCost = parseInt(document.getElementById('newFixedCost').value);
+            database.costs.maxCharge = parseInt(document.getElementById('newMaxCharge').value);
+            database.costs.gracePeriod = parseInt(document.getElementById('newGracePeriod').value);
+
+            document.getElementById('hourlyRate').textContent = database.costs.hourlyRate;
+            document.getElementById('fixedCost').textContent = database.costs.fixedCost;
+            document.getElementById('maxCharge').textContent = database.costs.maxCharge;
+            document.getElementById('gracePeriod').textContent = database.costs.gracePeriod;
+
+            document.getElementById('costSuccessMessage').classList.add('show');
+            setTimeout(() => {
+                closeModal('costModal');
+            }, 2000);
+
+            updateAllTables();
+        }
+
+        function updateAllTables() {
+            renderActiveTokens();
+            renderParkingTable();
+            renderTokensTable();
+            renderHistoryTable();
+        }
+
+        function switchTab(tabName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to button
+            event.target.classList.add('active');
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeSampleData();
+            updateAllTables();
+            updateStats();
+
+            // Auto-update every 10 seconds
+            setInterval(() => {
+                updateAllTables();
+                updateStats();
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
