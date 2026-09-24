@@ -1077,13 +1077,13 @@
         function renderActiveTokens() {
             const body = document.getElementById('activeTokensBody');
             body.innerHTML = '';
-            
+
             const now = new Date();
             database.tokens.filter(t => t.status === 'active').forEach(token => {
                 const vehicleType = token.vehicleType || 'bike';
                 const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, vehicleType, token.passType || 'hourly');
                 const duration = getCurrentDuration(token.entry, token.passType || 'hourly');
-                
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
@@ -1104,7 +1104,7 @@
         function renderParkingTable() {
             const body = document.getElementById('parkingBody');
             body.innerHTML = '';
-            
+
             const now = new Date();
             database.tokens.filter(t => t.status === 'active').forEach(token => {
                 const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly');
@@ -1134,13 +1134,13 @@
         function renderTokensTable() {
             const body = document.getElementById('tokensBody');
             body.innerHTML = '';
-            
+
             const now = new Date();
             database.tokens.forEach(token => {
                 const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : (token.exit ? calculateCost(token.entry, token.exit, token.vehicleType || 'bike', token.passType || 'hourly') : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly'));
                 const entryDisplay = token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString();
                 const exitDisplay = token.exit ? (token.passType === 'monthly' ? token.exit.toLocaleDateString('en-IN') : token.exit.toLocaleTimeString()) : 'Active';
-                
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
@@ -1161,7 +1161,7 @@
         function renderHistoryTable() {
             const body = document.getElementById('historyBody');
             body.innerHTML = '';
-            
+
             database.history.forEach(entry => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1183,7 +1183,7 @@
             const now = new Date();
             const activeTokens = database.tokens.filter(t => t.status === 'active').length;
             let totalRevenue = 0;
-            
+
             database.tokens.forEach(token => {
                 const exitTime = token.exit || now;
                 totalRevenue += calculateCost(token.entry, exitTime, token.vehicleType || 'bike', token.passType || 'hourly');
@@ -1193,6 +1193,11 @@
             document.getElementById('parkedVehiclesCount').textContent = activeTokens;
             document.getElementById('todayTotalCount').textContent = database.tokens.length;
             document.getElementById('todayRevenue').textContent = '₹' + totalRevenue;
+
+            const revenueCard = document.querySelector('.stat-card.revenue');
+            if (revenueCard) {
+                revenueCard.style.display = canAccess('view-revenue') ? 'block' : 'none';
+            }
         }
 
         function toggleMonthlyPassFields() {
@@ -1271,11 +1276,11 @@
                 vehicleType: vehicleType,
                 entry: entryDate,
                 exit: null,
-                spot: spot,
+                spot,
                 driver: driverName,
                 phone: driverPhone,
                 status: 'active',
-                passType: passType,
+                passType,
                 lockedInDate: passType === 'monthly' ? lockDateString(lockedInDateValue) : null,
                 expiryDate: passType === 'monthly' ? getMonthlyExpiryDate(entryDate) : null
             };
@@ -1295,10 +1300,7 @@
 
             updateAllTables();
             updateStats();
-
-            setTimeout(() => {
-                closeModal('createTokenModal');
-            }, 2000);
+            setTimeout(() => closeModal('createTokenModal'), 2000);
         }
 
         function lockDateString(dateString) {
@@ -1323,7 +1325,7 @@
                     amount: cost,
                     status: 'Completed'
                 });
-                
+
                 updateAllTables();
                 updateStats();
             }
@@ -1345,10 +1347,7 @@
             document.getElementById('gracePeriod').textContent = database.costs.gracePeriod;
 
             document.getElementById('costSuccessMessage').classList.add('show');
-            setTimeout(() => {
-                closeModal('costModal');
-            }, 2000);
-
+            setTimeout(() => closeModal('costModal'), 2000);
             updateAllTables();
         }
 
