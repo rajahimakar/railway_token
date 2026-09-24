@@ -434,15 +434,14 @@
             align-items: center;
             justify-content: center;
             z-index: 2000;
-            padding: 20px;
         }
 
         .login-panel {
-            width: min(500px, 90vw);
+            width: min(520px, 90vw);
             background: white;
             border-radius: 16px;
             padding: 32px;
-            box-shadow: 0 22px 50px rgba(0, 0, 0, 0.18);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
         }
 
         .login-header {
@@ -463,20 +462,43 @@
 
         .login-form {
             display: grid;
-            gap: 18px;
+            gap: 16px;
+        }
+
+        .demo-accounts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .demo-account {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            color: #374151;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .demo-account strong {
+            display: block;
+            color: #111827;
+            margin-bottom: 4px;
         }
 
         .user-chip {
             display: inline-flex;
             align-items: center;
             background: #eef2ff;
-            color: #312e81;
-            font-size: 11px;
-            font-weight: 700;
+            color: #3730a3;
             border-radius: 999px;
             padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
         }
 
         @keyframes slideIn {
@@ -533,18 +555,24 @@
         <div class="login-panel">
             <div class="login-header">
                 <h2>Railway Token Login</h2>
-                <p>Enter your secure credentials to continue.</p>
+                <p>Use one of the test accounts below to enter the system.</p>
             </div>
             <div class="login-form">
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" id="loginUsername" placeholder="Enter username">
+                    <input type="text" id="loginUsername" placeholder="Enter username" value="siteemployee">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter password">
+                    <input type="password" id="loginPassword" placeholder="Enter password" value="employee123">
                 </div>
                 <button class="action-btn btn-primary" style="width: 100%;" onclick="loginUser()">Login</button>
+            </div>
+            <div class="demo-accounts">
+                <div class="demo-account"><strong>Site Owner</strong>username: siteowner<br>password: owner123</div>
+                <div class="demo-account"><strong>Site Employee</strong>username: siteemployee<br>password: employee123</div>
+                <div class="demo-account"><strong>Business Demo</strong>username: business<br>password: business123</div>
+                <div class="demo-account"><strong>Master Admin</strong>username: master<br>password: master123</div>
             </div>
         </div>
     </div>
@@ -555,7 +583,7 @@
             <div class="header-title">
                 <span class="leaf-icon">🚂</span>
                 <h1>Railway Token System</h1>
-                <span class="user-chip" id="currentUserBadge">ADMIN</span>
+                <span class="user-chip" id="currentUserBadge">SITE EMPLOYEE</span>
             </div>
             <div class="nav-tabs">
                 <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
@@ -856,10 +884,10 @@
 
     <script>
         const rolePermissions = {
-            siteowner: ['overview', 'parking', 'tokens', 'costs', 'history', 'issue-token', 'edit-costs', 'view-revenue'],
-            siteemployee: ['overview', 'parking', 'tokens', 'issue-token'],
+            siteowner: ['overview', 'parking', 'tokens', 'costs', 'history', 'issue-token', 'edit-costs'],
+            siteemployee: ['overview', 'parking', 'tokens', 'history', 'issue-token'],
             business: ['overview', 'costs'],
-            master: ['overview', 'parking', 'tokens', 'costs', 'history', 'issue-token', 'edit-costs', 'view-revenue']
+            master: ['overview', 'parking', 'tokens', 'costs', 'history', 'issue-token', 'edit-costs']
         };
 
         let database = {
@@ -872,7 +900,7 @@
             users: [
                 { username: 'siteowner', password: 'owner123', role: 'siteowner', name: 'Site Owner' },
                 { username: 'siteemployee', password: 'employee123', role: 'siteemployee', name: 'Site Employee' },
-                { username: 'business', password: 'business123', role: 'business', name: 'Business User' },
+                { username: 'business', password: 'business123', role: 'business', name: 'Business Demo User' },
                 { username: 'master', password: 'master123', role: 'master', name: 'Master Admin' }
             ],
             currentUser: null,
@@ -880,111 +908,13 @@
             history: []
         };
 
-        function getCostConfig(vehicleType = 'bike') {
+        function getCostConfig(vehicleType) {
             return database.costs[vehicleType] || database.costs.bike;
-        }
-
-        function calculateCost(entryTime, exitTime, vehicleType = 'bike', passType = 'hourly') {
-            if (passType === 'monthly') {
-                return database.costs.monthlyPassPrice;
-            }
-
-            const config = getCostConfig(vehicleType);
-            const minutesDiff = (exitTime - entryTime) / (1000 * 60);
-            const hoursDiff = minutesDiff / 60;
-
-            if (minutesDiff <= database.costs.gracePeriod) return 0;
-
-            const hourlyCharge = Math.ceil(hoursDiff) * config.hourlyRate;
-            return Math.min(hourlyCharge, config.dailyMax);
-        }
-
-        function getMonthlyExpiryDate(startDate) {
-            const expiry = new Date(startDate);
-            expiry.setDate(expiry.getDate() + 30);
-            return expiry;
-        }
-
-        function formatDuration(minutes) {
-            const hours = Math.floor(minutes / 60);
-            const mins = minutes % 60;
-            if (hours === 0) return `${mins}m`;
-            return `${hours}h ${mins}m`;
-        }
-
-        function getCurrentDuration(entryTime, passType = 'hourly') {
-            if (passType === 'monthly') {
-                const expiryDate = getMonthlyExpiryDate(entryTime);
-                const now = new Date();
-                const remainingDays = Math.max(0, Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24)));
-                return `${remainingDays}d remaining`;
-            }
-
-            const now = new Date();
-            const minutes = Math.floor((now - entryTime) / (1000 * 60));
-            return formatDuration(minutes);
-        }
-
-        function canAccess(permission) {
-            if (!database.currentUser) return false;
-            return (rolePermissions[database.currentUser.role] || []).includes(permission);
-        }
-
-        function renderAccessControls() {
-            if (!database.currentUser) return;
-            const roleTag = database.currentUser.role.toUpperCase();
-            document.getElementById('currentUserBadge').textContent = roleTag;
-
-            document.querySelectorAll('[data-permission]').forEach(el => {
-                const permission = el.dataset.permission;
-                el.style.display = canAccess(permission) ? 'inline-flex' : 'none';
-            });
-
-            document.querySelectorAll('.tab-btn').forEach(button => {
-                const tab = button.dataset.tab;
-                const visible = (rolePermissions[database.currentUser.role] || []).includes(tab);
-                button.style.display = visible ? 'inline-block' : 'none';
-            });
-
-            const shouldShowRevenue = canAccess('view-revenue');
-            const revenueCard = document.querySelector('.stat-card.revenue');
-            if (revenueCard) {
-                revenueCard.style.display = shouldShowRevenue ? 'block' : 'none';
-            }
-
-            if (!canAccess('view-revenue') && !canAccess('edit-costs')) {
-                const costsTab = document.querySelector('.tab-btn[data-tab="costs"]');
-                if (costsTab) costsTab.style.display = 'none';
-            }
-        }
-
-        function loginUser() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            const user = database.users.find(item => item.username === username && item.password === password);
-
-            if (!user) {
-                alert('Invalid username or password.');
-                return;
-            }
-
-            database.currentUser = user;
-            localStorage.setItem('railwayTokenSession', JSON.stringify(user));
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
-            renderAccessControls();
-            switchTab('overview');
-        }
-
-        function logoutUser() {
-            database.currentUser = null;
-            localStorage.removeItem('railwayTokenSession');
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('appContainer').style.display = 'none';
         }
 
         function initializeSampleData() {
             const now = new Date();
+            
             database.tokens = [
                 {
                     id: 'A-102',
@@ -1050,15 +980,108 @@
             ];
         }
 
+        function calculateCost(entryTime, exitTime, vehicleType = 'bike', passType = 'hourly') {
+            if (passType === 'monthly') {
+                return database.costs.monthlyPassPrice;
+            }
+
+            const config = getCostConfig(vehicleType);
+            const minutesDiff = (exitTime - entryTime) / (1000 * 60);
+            const hoursDiff = minutesDiff / 60;
+            
+            if (minutesDiff <= database.costs.gracePeriod) return 0;
+            
+            const hourlyCharge = Math.ceil(hoursDiff) * config.hourlyRate;
+            return Math.min(hourlyCharge, config.dailyMax);
+        }
+
+        function getMonthlyExpiryDate(startDate) {
+            const expiry = new Date(startDate);
+            expiry.setDate(expiry.getDate() + 30);
+            return expiry;
+        }
+
+        function formatDuration(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            if (hours === 0) return `${mins}m`;
+            return `${hours}h ${mins}m`;
+        }
+
+        function getCurrentDuration(entryTime, passType = 'hourly') {
+            if (passType === 'monthly') {
+                const expiryDate = getMonthlyExpiryDate(entryTime);
+                const now = new Date();
+                const remainingDays = Math.max(0, Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24)));
+                return `${remainingDays}d remaining`;
+            }
+
+            const now = new Date();
+            const minutes = Math.floor((now - entryTime) / (1000 * 60));
+            return formatDuration(minutes);
+        }
+
+        function canAccess(permission) {
+            if (!database.currentUser) return false;
+            return (rolePermissions[database.currentUser.role] || []).includes(permission);
+        }
+
+        function renderAccessControls() {
+            const user = database.currentUser;
+            if (!user) return;
+
+            const roleText = user.role.toUpperCase().replace(/_/g, ' ');
+            document.getElementById('currentUserBadge').textContent = roleText;
+
+            document.querySelectorAll('[data-permission]').forEach(element => {
+                const permission = element.dataset.permission;
+                element.style.display = canAccess(permission) ? 'inline-flex' : 'none';
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                const tab = button.dataset.tab;
+                const visible = (rolePermissions[user.role] || []).includes(tab);
+                button.style.display = visible ? 'inline-block' : 'none';
+            });
+
+            if (!canAccess('issue-token')) {
+                document.getElementById('successMessage').classList.remove('show');
+            }
+        }
+
+        function loginUser() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const user = database.users.find(item => item.username === username && item.password === password);
+
+            if (!user) {
+                alert('Invalid username or password. Please try one of the demo users above.');
+                return;
+            }
+
+            database.currentUser = user;
+            localStorage.setItem('railwayTokenSession', JSON.stringify(user));
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            renderAccessControls();
+            switchTab('overview');
+        }
+
+        function logoutUser() {
+            database.currentUser = null;
+            localStorage.removeItem('railwayTokenSession');
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
         function renderActiveTokens() {
             const body = document.getElementById('activeTokensBody');
             body.innerHTML = '';
 
             const now = new Date();
             database.tokens.filter(t => t.status === 'active').forEach(token => {
-                const cost = token.passType === 'monthly'
-                    ? database.costs.monthlyPassPrice
-                    : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly');
+                const vehicleType = token.vehicleType || 'bike';
+                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, vehicleType, token.passType || 'hourly');
                 const duration = getCurrentDuration(token.entry, token.passType || 'hourly');
 
                 const row = document.createElement('tr');
@@ -1084,13 +1107,11 @@
 
             const now = new Date();
             database.tokens.filter(t => t.status === 'active').forEach(token => {
-                const cost = token.passType === 'monthly'
-                    ? database.costs.monthlyPassPrice
-                    : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly');
+                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly');
                 const minutes = Math.floor((now - token.entry) / (1000 * 60));
                 const hours = (minutes / 60).toFixed(1);
                 const duration = token.passType === 'monthly' ? '30d' : `${hours}h`;
-
+                
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><span class="token-badge">#${token.id}</span></td>
@@ -1116,9 +1137,7 @@
 
             const now = new Date();
             database.tokens.forEach(token => {
-                const cost = token.passType === 'monthly'
-                    ? database.costs.monthlyPassPrice
-                    : (token.exit ? calculateCost(token.entry, token.exit, token.vehicleType || 'bike', token.passType || 'hourly') : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly'));
+                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : (token.exit ? calculateCost(token.entry, token.exit, token.vehicleType || 'bike', token.passType || 'hourly') : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly'));
                 const entryDisplay = token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString();
                 const exitDisplay = token.exit ? (token.passType === 'monthly' ? token.exit.toLocaleDateString('en-IN') : token.exit.toLocaleTimeString()) : 'Active';
 
@@ -1149,7 +1168,7 @@
                     <td>${entry.date}</td>
                     <td><span class="token-badge">#${entry.id}</span></td>
                     <td>${entry.vehicle}</td>
-                    <td>${entry.vehicleType === 'car' ? 'Car' : 'Bike'}</td>
+                    <td>${entry.vehicleType || 'bike'}</td>
                     <td>${entry.entry}</td>
                     <td>${entry.exit}</td>
                     <td>${entry.duration}</td>
@@ -1211,7 +1230,7 @@
 
         function showCostModal() {
             if (!canAccess('edit-costs')) {
-                alert('You do not have permission to edit pricing.');
+                alert('You do not have permission to edit the pricing.');
                 return;
             }
 
@@ -1254,7 +1273,7 @@
             const newToken = {
                 id: tokenId,
                 vehicle: vehicleNo,
-                vehicleType,
+                vehicleType: vehicleType,
                 entry: entryDate,
                 exit: null,
                 spot,
@@ -1267,8 +1286,9 @@
             };
 
             database.tokens.push(newToken);
+            
             document.getElementById('successMessage').classList.add('show');
-
+            
             document.getElementById('vehicleNumber').value = '';
             document.getElementById('driverName').value = '';
             document.getElementById('driverPhone').value = '';
@@ -1292,11 +1312,8 @@
             if (token) {
                 token.status = 'completed';
                 token.exit = new Date();
-
-                const cost = token.passType === 'monthly'
-                    ? database.costs.monthlyPassPrice
-                    : calculateCost(token.entry, token.exit, token.vehicleType || 'bike', token.passType || 'hourly');
-
+                
+                const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, token.exit, token.vehicleType || 'bike', token.passType || 'hourly');
                 database.history.unshift({
                     date: new Date().toLocaleDateString('en-IN'),
                     id: token.id,
@@ -1345,16 +1362,20 @@
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-
+            
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-
-            const target = document.getElementById(tabName);
-            if (target) target.classList.add('active');
+            
+            const targetSection = document.getElementById(tabName);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
 
             const activeButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-            if (activeButton) activeButton.classList.add('active');
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
         }
 
         document.addEventListener('click', (e) => {
@@ -1365,19 +1386,20 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeSampleData();
-            const savedSession = JSON.parse(localStorage.getItem('railwayTokenSession') || 'null');
-            if (savedSession) {
-                const existingUser = database.users.find(user => user.username === savedSession.username);
-                if (existingUser) {
-                    database.currentUser = existingUser;
+            const sessionUser = JSON.parse(localStorage.getItem('railwayTokenSession') || 'null');
+
+            if (sessionUser) {
+                const storedUser = database.users.find(user => user.username === sessionUser.username);
+                if (storedUser) {
+                    database.currentUser = storedUser;
                     document.getElementById('loginScreen').style.display = 'none';
                     document.getElementById('appContainer').style.display = 'block';
                 }
             }
 
-            renderAccessControls();
             updateAllTables();
             updateStats();
+            renderAccessControls();
             switchTab('overview');
 
             setInterval(() => {
