@@ -2,125 +2,127 @@
 
 ## Purpose
 
-This project evolved from a static railway token prototype into a live demo web application. The goal is to preserve the original operational workflow while moving it into a real data-backed system that can be tested in a zero-cost production-like environment.
+This project was designed to simulate a real railway token operations workflow while staying lightweight enough for stakeholder review, live demo validation, and a low-cost production-like rollout. The architecture balances a convincing user experience with a practical path to a lived database-backed app.
 
 ## Current architecture
 
-### 1. Frontend application
-- The app is currently implemented as a Next.js frontend in [app/page.js](app/page.js), [app/login/page.js](app/login/page.js), [app/dashboard/page.js](app/dashboard/page.js), and [app/costs/page.js](app/costs/page.js).
-- The design retains the original railway operations look and feel while making the app act like a demo business dashboard rather than a purely static mock.
-- The root route redirects to the login page, and the dashboard flow is grouped around overview, costs, and operational monitoring views.
+### 1. Frontend structure
+The app is implemented as a Next.js application with a role-aware operations interface.
 
-### 2. API layer
-- The app uses server-side route handlers under [app/api/tokens/route.js](app/api/tokens/route.js) for live token reads and writes.
-- This API is the bridge between the frontend and the database and acts as the point where validation and persistence happen.
-- The API path is designed to support a future business-user workflow while staying lightweight for the current live demo stage.
+Core frontend pages include:
+- [app/login/page.js](app/login/page.js) — secure access flow and demo identity selection
+- [app/dashboard/page.js](app/dashboard/page.js) — overview dashboard and operational summary
+- [app/parking/page.js](app/parking/page.js) — site-based parking board with occupancy and status indicators
+- [app/tokens/page.js](app/tokens/page.js) — active token management table with issue/complete actions
+- [app/history/page.js](app/history/page.js) — complete transaction history with search and payment status
+- [app/costs/page.js](app/costs/page.js) — owner pricing and grace-period configuration
+- [app/overdue/page.js](app/overdue/page.js) — owner and employee overdue queues
+- [app/notifications/page.js](app/notifications/page.js) — open alert and resolved/closed history
 
-### 3. Data layer
-- The persistent data model is defined in [supabase_schema.sql](supabase_schema.sql).
-- Core tables include:
-  - roles
-  - profiles
-  - cost_settings
-  - tokens
-  - token_history
-  - notifications
-  - audit_logs
-- This gives the project a real operational structure rather than browser-only sample state.
+This layout keeps the original railway operations feel while splitting the user flow into the same operational layers a real station team would use: overview, parking, tokening, cost management, and review.
 
-### 4. Database access and security
-- The project uses Supabase as the live database provider.
-- The connection logic is centralized in [lib/server-supabase.js](lib/server-supabase.js).
-- RLS and policy setup are handled in [supabase_policies.sql](supabase_policies.sql).
-- The policy layer is intentionally permissive for the current demo stage, so the app can be tested live without blocking database access while the workflow is still being validated.
+### 2. Routing and access model
+The app uses a protected-route flow in [middleware.js](middleware.js) to redirect unauthenticated users to the login page.
 
-### 5. Authentication approach
-- The current app uses a demo login flow in [app/login/page.js](app/login/page.js) for front-end validation and stakeholder walkthroughs.
-- This is not yet the final production auth design; it is a placeholder to preserve the original operational feel while the app is being moved toward a live system.
-- The business-ready next step is a proper Supabase Auth implementation with role-based access and route protection.
+Protected screens include:
+- dashboard
+- parking
+- tokens
+- history
+- costs
+- overdue
+- notifications
 
-### 6. Business logic and live rules
-- Cost tracking is represented in the pricing page at [app/costs/page.js](app/costs/page.js).
-- Token and alert data can be created and read through the live API.
-- The operations model preserves the original workflow of:
-  - creating a token
-  - tracking active vehicles
-  - reviewing costs
-  - checking overdue conditions
-  - showing operational summaries
+This helps maintain a realistic access model where only valid sessions can use the operational pages.
+
+### 3. API and database integration
+The live application can read and write vehicle and token data through [app/api/tokens/route.js](app/api/tokens/route.js).
+
+The persistence model is defined in [supabase_schema.sql](supabase_schema.sql), with live DB access managed through [lib/server-supabase.js](lib/server-supabase.js). Core tables include:
+- profiles
+- roles
+- tokens
+- token_history
+- costs
+- notifications
+- audit_logs
+
+This provides a realistic base for live operational data while still keeping the solution lightweight for stakeholder demos.
+
+### 4. Business flow model
+The app is structured around the actual business workflow expected by a railway operations team:
+1. issue a token
+2. track the site occupancy and zone status
+3. review active token conditions
+4. assess grace-window and overdue risk
+5. resolve or close alerts
+6. review ticket history and payment records
+
+That structure is what makes the product feel authentic rather than like a generic dashboard mock.
+
+### 5. Role separation
+The current demo includes owner and employee paths:
+- owner: costs, policy settings, historical review, operation oversight
+- employee: operational queue, parking monitoring, token status follow-up
+
+The design supports a realistic separation of duties without requiring a heavy enterprise system at this stage.
 
 ## Why this route was chosen
 
-### Zero-cost live demo path
-This project selected a low-friction live architecture using Vercel + Supabase because it allows the app to behave like a real web app without incurring heavy infrastructure costs.
+### Low-friction live demo
+A Vercel + Supabase approach was chosen because it gives the app a real web app feel without introducing major infrastructure cost or setup complexity.
 
-### Fast validation of real workflow
-The main purpose was to validate the business model in a live environment with real database reads and writes before committing to deeper production work.
+### Realistic stakeholder validation
+The app needed to look and behave like a live station operations tool, not just a static mock. That reduces risk and helps confirm the business model before investing deeper in production architecture.
 
-### Preservation of original demo design
-The app keeps the station operations UI, blue-gray design language, and login portal feel so the experience remains familiar and authentic for stakeholder review.
+### Progressive maturity
+The current build is not a final production system, but it follows the correct path for a live demo: UI realism, DB-backed persistence, role-aware flows, and operational logic.
 
 ## Constraints and trade-offs
 
-- The login flow is still demo-oriented and not production-authenticated.
-- The project currently depends on permissive demo policies; these should be tightened later.
-- The code is structurally aligned to live deployment, but not yet hardened for broad public business-user access.
-- Some pages remain demonstration-style rather than full operational admin screens.
+- The login flow remains a demo-oriented session model rather than full production authentication.
+- The data access layer is live but still intentionally lightweight.
+- Security is more permissive than production-grade and should be hardened before external business rollout.
+- The visual design is operationally realistic, but still built for stakeholder review and product validation.
 
-## Current live architecture summary
+## Current architecture summary
 
 ### Presentation layer
-- Next.js pages for login, dashboard, and cost management
-- Vercel-hosted frontend deployment
+- Next.js app router pages for dashboard and operational views
+- realistic station and parking dashboard design
+- owner and employee role views
 
 ### Application layer
-- Next.js API routes for token operations
-- Server-side Supabase client
+- Next.js route handlers and demo session logic
+- business logic for pricing, overdue, notifications, and resolved history
 
 ### Persistence layer
-- PostgreSQL tables in Supabase
-- live token and notifications records
+- Supabase/PostgreSQL database structure
+- live tokens, costs, notifications, and history model
 
-### Authorization stage
-- Demo login and flow simulation for stakeholder testing
-- Production auth should be added next with Supabase Auth and risk-based route guards
-
-## Current deployment path
-
-### Production-like release path
-- Use Vercel to host the frontend
-- Use Supabase as the live database layer
-- Keep the app lightweight while the workflow is validated
-
-### Current state
-- Live deployment is already active in Vercel
-- Supabase tables are seeded and accessible through the API
-- The app can be tested end-to-end with live token creation and retrieval
+### Security stage
+- demo session route protection for live validation
+- future improvement: Supabase Auth with stronger role enforcement and production RLS
 
 ## Recommended next step
 
-The next major step is to move from demo-safe access to real business-user authentication and role separation.
+The next milestone is to tighten the access model and move from demo-auth to production-grade identity management.
 
-Planned progression:
-1. replace demo login with Supabase Auth
-2. enforce role-based access for owner vs employee flows
-3. add backend-side overdue logic and notification generation
-4. tighten RLS for production safety
-5. finalize a public release checklist
+Planned steps:
+1. replace demo session logic with Supabase Auth
+2. enforce role-based access more strictly across backend APIs
+3. harden RLS rules for production use
+4. add audit trail and full token lifecycle tracking
+5. prepare a public deployment checklist and release notes
 
-## Phase 1 completed state
+## Completed state
 
-### Included
-- Vercel-hosted live app path
-- Supabase schema and database-backed operations
-- token API access and live records
-- dashboard and cost review screens
-- demo login and operational UI flow
+The project now includes:
+- authentic railway operations UI
+- live routing and protected pages
+- token management and history views
+- parking occupancy board with site status colors and layout indicators
+- cost and overdue logic
+- database-backed data flow for demo validation
 
-### Not yet complete
-- secure production auth
-- real role enforcement across all endpoints
-- complete owner/employee workflow separation
-- production-grade security policy hardening
-
-This is a valid live demo architecture, but not yet a full production authorization model.
+The architecture is therefore suitable for stakeholder demo, validation, and next-step production hardening.

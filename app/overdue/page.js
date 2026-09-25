@@ -30,18 +30,18 @@ export default function OverduePage() {
   const navTabs = isOwner
     ? [
         { label: 'Overview', href: '/dashboard' },
-        { label: 'Parking', href: '/dashboard' },
-        { label: 'Tokens', href: '/dashboard' },
+        { label: 'Parking', href: '/parking' },
+        { label: 'Tokens', href: '/tokens' },
         { label: 'Costs', href: '/costs' },
         { label: 'Overdue', href: '/overdue' },
-        { label: 'History', href: '/dashboard' },
+        { label: 'History', href: '/history' },
       ]
     : [
         { label: 'Overview', href: '/dashboard' },
-        { label: 'Parking', href: '/dashboard' },
-        { label: 'Tokens', href: '/dashboard' },
+        { label: 'Parking', href: '/parking' },
+        { label: 'Tokens', href: '/tokens' },
         { label: 'Overdue', href: '/overdue' },
-        { label: 'History', href: '/dashboard' },
+        { label: 'History', href: '/history' },
       ];
 
   const summary = useMemo(() => ({
