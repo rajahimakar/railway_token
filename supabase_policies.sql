@@ -4,6 +4,7 @@ grant usage on schema public to service_role;
 grant select, insert, update, delete on public.roles to service_role;
 grant select, insert, update, delete on public.profiles to service_role;
 grant select, insert, update, delete on public.cost_settings to service_role;
+grant select, insert, update, delete on public.parking_sites to service_role;
 grant select, insert, update, delete on public.tokens to service_role;
 grant select, insert, update, delete on public.token_history to service_role;
 grant select, insert, update, delete on public.notifications to service_role;
@@ -13,6 +14,7 @@ grant select, insert, update, delete on public.audit_logs to service_role;
 alter table roles enable row level security;
 alter table profiles enable row level security;
 alter table cost_settings enable row level security;
+alter table parking_sites enable row level security;
 alter table tokens enable row level security;
 alter table token_history enable row level security;
 alter table notifications enable row level security;
@@ -26,6 +28,9 @@ drop policy if exists "profiles insertable by authenticated users" on profiles;
 drop policy if exists "profiles updatable by authenticated users" on profiles;
 drop policy if exists "cost settings readable by authenticated users" on cost_settings;
 drop policy if exists "cost settings updatable by authenticated users" on cost_settings;
+drop policy if exists "parking sites readable by authenticated users" on parking_sites;
+drop policy if exists "parking sites insertable by authenticated users" on parking_sites;
+drop policy if exists "parking sites updatable by authenticated users" on parking_sites;
 drop policy if exists "tokens readable by authenticated users" on tokens;
 drop policy if exists "tokens insertable by authenticated users" on tokens;
 drop policy if exists "tokens updatable by authenticated users" on tokens;
@@ -73,6 +78,20 @@ using (auth.role() = 'authenticated');
 
 create policy "cost settings updatable by authenticated users"
 on cost_settings for update
+using (auth.role() = 'authenticated')
+with check (auth.role() = 'authenticated');
+
+-- Parking sites are readable by authenticated users
+create policy "parking sites readable by authenticated users"
+on parking_sites for select
+using (auth.role() = 'authenticated');
+
+create policy "parking sites insertable by authenticated users"
+on parking_sites for insert
+with check (auth.role() = 'authenticated');
+
+create policy "parking sites updatable by authenticated users"
+on parking_sites for update
 using (auth.role() = 'authenticated')
 with check (auth.role() = 'authenticated');
 
@@ -125,6 +144,19 @@ with check (auth.role() = 'authenticated');
 -- Demo-phase fallback for the live prototype
 -- This keeps the app usable while the project is still in the zero-cost live demo stage.
 -- Tighten these policies later before production rollout.
+create policy "demo allow parking sites select"
+on parking_sites for select
+using (true);
+
+create policy "demo allow parking sites insert"
+on parking_sites for insert
+with check (true);
+
+create policy "demo allow parking sites update"
+on parking_sites for update
+using (true)
+with check (true);
+
 create policy "demo allow tokens select"
 on tokens for select
 using (true);

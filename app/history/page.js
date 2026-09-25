@@ -43,7 +43,7 @@ export default function HistoryPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div className="railway-mark" style={{ width: '34px', height: '34px', margin: 0, fontSize: '20px' }}>🚂</div>
-              <h1 style={{ fontSize: '28px' }}>Railway Token System</h1>
+              <h1 style={{ fontSize: '28px' }}>Parking Token System</h1>
             </div>
           </div>
           <div className="header-right">

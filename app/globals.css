@@ -97,27 +97,37 @@ h1 {
 .info-panel,
 .form-panel,
 .cost-panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 6px 16px var(--shadow);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248, 251, 255, 0.96));
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255,255,255,0.8);
 }
 
 .stat-card {
   padding: 22px;
-  background: rgba(255,255,255,0.78);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(240,247,255,0.96));
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.1);
 }
 
 .stat-label {
   color: var(--muted);
   font-size: 14px;
   margin-bottom: 10px;
+  letter-spacing: 0.02em;
 }
 
 .stat-value {
   font-size: 36px;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 8px;
+  color: #0f172a;
 }
 
 .stat-detail {
@@ -136,6 +146,15 @@ h1 {
 .form-panel,
 .cost-panel {
   padding: 20px;
+}
+
+.panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.96));
+}
+
+.form-panel,
+.cost-panel {
+  background: linear-gradient(180deg, rgba(248, 250, 255, 0.98), rgba(255,255,255,0.96));
 }
 
 .panel-header,
@@ -196,20 +215,38 @@ h1 {
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: rgba(255,255,255,0.32);
 }
 
 th, td {
   text-align: left;
   padding: 12px 10px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  vertical-align: middle;
 }
 
 th {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  background: rgba(248, 250, 255, 0.8);
+}
+
+tbody tr {
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+tbody tr:hover {
+  background: rgba(239, 246, 255, 0.7);
+}
+
+tbody td {
+  color: #1e293b;
+  font-size: 14px;
 }
 
 .badge,
@@ -419,12 +456,22 @@ th {
 .form-field input,
 .form-field select {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(148, 163, 184, 0.42);
   border-radius: 12px;
-  background: white;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
   padding: 12px 14px;
   font-size: 15px;
   color: var(--text);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04), 0 0 0 0 rgba(79, 142, 247, 0);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: rgba(79, 142, 247, 0.9);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04), 0 0 0 4px rgba(79, 142, 247, 0.12);
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
 }
 
 .login-submit {
@@ -456,23 +503,41 @@ th {
 
 .topbar-row {
   margin-bottom: 0;
-  background: linear-gradient(90deg, #5d66f1 0%, #6c46d9 100%);
-  border-radius: 0 0 18px 18px;
-  padding: 18px 22px 16px;
-  box-shadow: 0 10px 30px rgba(72, 90, 214, 0.18);
+  background: linear-gradient(135deg, #0f172a 0%, #122c4e 38%, #1e3a8a 100%);
+  border-radius: 0 0 24px 24px;
+  padding: 20px 24px 18px;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-top: none;
 }
 
 .dashboard-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #bfdbfe;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dashboard-header h1 {
+  color: #f8fbff;
+  letter-spacing: -0.03em;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .notification-chip {
@@ -480,24 +545,26 @@ th {
   align-items: center;
   justify-content: center;
   min-width: 76px;
-  padding: 8px 12px;
+  padding: 9px 14px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.18);
+  background: rgba(148, 163, 184, 0.12);
   color: #edf3ff;
   font-size: 11px;
-  font-weight: 700;
-  border: 1px solid rgba(255,255,255,0.25);
+  font-weight: 800;
+  border: 1px solid rgba(191, 219, 254, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .user-badge {
-  background: rgba(255,255,255,0.18);
-  color: #eef2ff;
+  background: linear-gradient(135deg, rgba(191, 219, 254, 0.24), rgba(59, 130, 246, 0.26));
+  color: #f8fbff;
   border-radius: 999px;
-  padding: 8px 12px;
+  padding: 9px 14px;
   font-size: 11px;
   text-transform: uppercase;
-  font-weight: 700;
-  border: 1px solid rgba(255,255,255,0.25);
+  font-weight: 800;
+  border: 1px solid rgba(191, 219, 254, 0.28);
+  letter-spacing: 0.08em;
 }
 
 .nav-row {
@@ -506,24 +573,35 @@ th {
   gap: 10px;
   margin-top: 18px;
   margin-bottom: 22px;
-  padding: 12px 10px;
-  background: rgba(255,255,255,0.12);
+  padding: 12px 12px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(17, 24, 39, 0.84));
+  border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 14px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
 }
 
 .nav-link {
-  padding: 10px 16px;
+  padding: 11px 16px;
   border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #edf3ff;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.nav-link:hover {
   background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #eff5ff;
-  font-weight: 600;
+  border-color: rgba(191, 219, 254, 0.32);
+  transform: translateY(-1px);
 }
 
 .nav-link.active {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.28);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.24), rgba(59, 130, 246, 0.18));
+  border-color: rgba(147, 197, 253, 0.5);
   color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .token-form,
@@ -553,10 +631,11 @@ th {
 }
 
 .cost-card {
-  background: #f7faff;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(242,247,255,0.96));
   padding: 20px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 10px 22px rgba(15, 23, 42, 0.04);
 }
 
 .cost-card h4 {
@@ -567,7 +646,8 @@ th {
 
 .cost-card strong {
   font-size: 30px;
-  color: var(--text);
+  color: #0f172a;
+  font-weight: 800;
 }
 
 .cost-row {
@@ -702,6 +782,11 @@ th {
   border-radius: 8px;
   border: 1px solid rgba(17, 24, 39, 0.08);
   background: rgba(148, 163, 184, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
 }
 
 .parking-bay.occupied {
@@ -711,6 +796,14 @@ th {
 
 .parking-bay.empty {
   background: rgba(148, 163, 184, 0.12);
+}
+
+.slot-token-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(15, 23, 42, 0.35);
 }
 
 .site-badge {
