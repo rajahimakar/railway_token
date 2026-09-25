@@ -28,6 +28,16 @@ create table if not exists cost_settings (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists parking_sites (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  zone text not null,
+  capacity integer not null check (capacity > 0),
+  status text not null default 'active' check (status in ('active','busy','maintenance')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists tokens (
   id uuid primary key default gen_random_uuid(),
   token_number text not null unique,
@@ -36,6 +46,8 @@ create table if not exists tokens (
   driver_phone text,
   vehicle_type text not null check (vehicle_type in ('bike','car')),
   pass_type text not null check (pass_type in ('hourly','monthly')),
+  site_name text not null default 'Site-A1',
+  slot_number integer not null default 1 check (slot_number > 0),
   spot text not null,
   status text not null default 'active' check (status in ('active','completed','cancelled')),
   entry_at timestamptz not null default now(),
@@ -45,7 +57,8 @@ create table if not exists tokens (
   monthly_locked_date date,
   created_by uuid references auth.users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint tokens_site_slot_unique unique (site_name, slot_number)
 );
 
 create table if not exists token_history (
@@ -82,6 +95,7 @@ create table if not exists audit_logs (
 );
 
 create index if not exists idx_tokens_status on tokens(status);
+create index if not exists idx_tokens_site_slot on tokens(site_name, slot_number);
 create index if not exists idx_tokens_entry_at on tokens(entry_at);
 create index if not exists idx_notifications_status on notifications(status);
 create index if not exists idx_token_history_token_id on token_history(token_id);
@@ -90,6 +104,17 @@ create index if not exists idx_audit_logs_table_record on audit_logs(table_name,
 insert into roles (name)
 values ('siteowner'), ('siteemployee'), ('business'), ('master')
 on conflict (name) do nothing;
+
+insert into parking_sites (name, zone, capacity)
+values
+  ('Site-A1', 'North bay', 20),
+  ('Site-A2', 'East lane', 18),
+  ('Site-B1', 'South plaza', 16),
+  ('Site-B2', 'West entry', 14)
+on conflict (name) do update set
+  zone = excluded.zone,
+  capacity = excluded.capacity,
+  updated_at = now();
 
 insert into cost_settings (
   bike_hourly_rate,

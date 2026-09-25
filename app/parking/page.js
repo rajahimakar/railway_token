@@ -4,13 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { clearDemoUser, readDemoUser } from '../../lib/auth';
-
-const siteData = [
-  { site: 'Site-A1', status: 'Active', occupied: 18, capacity: 20, zone: 'North bay', vacant: 2, vehicles: ['MH-12-BT-3498', 'MH-02-CD-5678'] },
-  { site: 'Site-A2', status: 'Busy', occupied: 15, capacity: 18, zone: 'East lane', vacant: 3, vehicles: ['MH-10-RT-1188', 'MH-11-ST-9987'] },
-  { site: 'Site-B1', status: 'Low load', occupied: 11, capacity: 16, zone: 'South plaza', vacant: 5, vehicles: ['MH-17-AB-4401'] },
-  { site: 'Site-B2', status: 'Active', occupied: 7, capacity: 14, zone: 'West entry', vacant: 7, vehicles: ['MH-08-KL-7711'] },
-];
+import { readStoredTokens, siteLayouts } from '../../lib/demo-business';
 
 const toneMap = {
   Active: 'good',
@@ -21,6 +15,7 @@ const toneMap = {
 export default function ParkingPage() {
   const router = useRouter();
   const [user, setUser] = useState({ role: 'SITE OWNER' });
+  const [tokens, setTokens] = useState([]);
 
   useEffect(() => {
     const savedUser = readDemoUser();
@@ -28,7 +23,31 @@ export default function ParkingPage() {
       router.push('/login');
       return;
     }
+
+    const loadTokens = async () => {
+      try {
+        const response = await fetch('/api/tokens');
+        if (response.ok) {
+          const data = await response.json();
+          const rows = Array.isArray(data?.tokens) ? data.tokens : [];
+          if (rows.length > 0) {
+            setTokens(rows);
+            return;
+          }
+        }
+      } catch {
+        // fall back to demo storage when Supabase is not configured
+      }
+
+      setTokens(readStoredTokens().length ? readStoredTokens() : [
+        { id: 'A-102', vehicle: 'MH-12-BT-3498', site: 'Site-A1', slot: 1 },
+        { id: 'A-103', vehicle: 'MH-02-CD-5678', site: 'Site-A1', slot: 2 },
+        { id: 'A-101', vehicle: 'MH-15-EF-2341', site: 'Site-A2', slot: 1 },
+      ]);
+    };
+
     setUser(savedUser);
+    loadTokens();
   }, [router]);
 
   const isOwner = user.role === 'SITE OWNER';
@@ -50,6 +69,35 @@ export default function ParkingPage() {
         ]
   ), [isOwner]);
 
+  const siteData = useMemo(() => siteLayouts.map((layout) => {
+    const occupiedTokens = tokens.filter((token) => token.site === layout.site && token.status !== 'Completed');
+    const capacity = layout.capacity;
+    const slotMap = {};
+    occupiedTokens.forEach((token) => {
+      slotMap[token.slot] = token;
+    });
+    const occupied = occupiedTokens.length;
+    const vacant = capacity - occupied;
+    const status = occupied >= capacity * 0.8 ? (occupied >= capacity ? 'Busy' : 'Active') : 'Low load';
+
+    return {
+      site: layout.site,
+      status: occupied >= capacity * 0.8 ? 'Busy' : (vacant > capacity * 0.35 ? 'Active' : 'Low load'),
+      occupied,
+      capacity,
+      vacant,
+      zone: layout.site === 'Site-A1' ? 'North bay' : layout.site === 'Site-A2' ? 'East lane' : layout.site === 'Site-B1' ? 'South plaza' : 'West entry',
+      slots: Array.from({ length: capacity }, (_, index) => {
+        const slotNumber = index + 1;
+        return {
+          slotNumber,
+          token: slotMap[slotNumber] || null,
+          occupied: Boolean(slotMap[slotNumber]),
+        };
+      }),
+    };
+  }), [tokens]);
+
   const handleLogout = () => {
     clearDemoUser();
     router.push('/login');
@@ -62,7 +110,7 @@ export default function ParkingPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div className="railway-mark" style={{ width: '34px', height: '34px', margin: 0, fontSize: '20px' }}>🚂</div>
-              <h1 style={{ fontSize: '28px' }}>Railway Token System</h1>
+              <h1 style={{ fontSize: '28px' }}>Parking Token System</h1>
             </div>
           </div>
           <div className="header-right">
@@ -87,7 +135,7 @@ export default function ParkingPage() {
       <section className="stats-grid" style={{ marginTop: '20px' }}>
         <article className="stat-card">
           <div className="stat-label">Active lots</div>
-          <div className="stat-value">4</div>
+          <div className="stat-value">{siteData.length}</div>
           <div className="stat-detail">Parking sites live</div>
         </article>
 
@@ -126,8 +174,10 @@ export default function ParkingPage() {
                 </div>
 
                 <div className="parking-bays">
-                  {Array.from({ length: site.capacity }).map((_, index) => (
-                    <span key={`${site.site}-${index}`} className={`parking-bay ${index < site.occupied ? 'occupied' : 'empty'}`} />
+                  {site.slots.map((slot) => (
+                    <div key={`${site.site}-slot-${slot.slotNumber}`} className={`parking-bay ${slot.occupied ? 'occupied' : 'empty'}`} title={slot.occupied ? `${slot.token.id} - ${site.site}` : `Empty slot ${slot.slotNumber}`}>
+                      {slot.occupied ? <span className="slot-token-tag">{slot.token.id}</span> : null}
+                    </div>
                   ))}
                 </div>
 

@@ -63,7 +63,7 @@ export default function OverduePage() {
       <div className="topbar-row">
         <div className="dashboard-header">
           <div>
-            <p className="eyebrow">Railway operations</p>
+            <p className="eyebrow">Parking operations</p>
             <h1>{isOwner ? 'Owner overdue review' : 'Employee overdue queue'}</h1>
           </div>
           <div className="user-badge">{user.role}</div>

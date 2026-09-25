@@ -6,9 +6,9 @@ import { setDemoUser } from '../../lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [employeeId, setEmployeeId] = useState('siteemployee');
-  const [password, setPassword] = useState('railway123');
-  const [message, setMessage] = useState('Demo access: siteemployee / railway123');
+  const [employeeId, setEmployeeId] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -36,7 +36,7 @@ export default function LoginPage() {
       <div className="login-panel">
         <div className="login-brand">
           <div className="railway-mark">🚆</div>
-          <div className="brand-label">Railway operations</div>
+          <div className="brand-label">Parking operations</div>
           <h3>Station access portal</h3>
           <p>
             Securely monitor token issuance, occupancy, cost oversight and overdue management
@@ -52,7 +52,7 @@ export default function LoginPage() {
         <div className="login-card">
           <div className="login-header">
             <span className="brand-badge">Protected access</span>
-            <h2>Railway Token Login</h2>
+            <h2>Parking Token Login</h2>
             <p>Enter your secure credentials to continue.</p>
           </div>
 

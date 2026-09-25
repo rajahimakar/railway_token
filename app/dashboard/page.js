@@ -5,18 +5,22 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { clearDemoUser, readDemoUser } from '../../lib/auth';
 import {
+  assignTokenSlot,
   buildNotificationsForTokens,
   defaultCosts,
+  parseDurationMinutes,
   readResolvedNotifications,
   readStoredCosts,
   readStoredNotifications,
+  readStoredTokens,
   saveStoredNotifications,
+  saveStoredTokens,
 } from '../../lib/demo-business';
 
 const starterTokens = [
-  { id: 'A-102', vehicle: 'MH-12-BT-3498', type: 'Bike', status: 'Active', duration: '1h 20m', paidDuration: '1h 00m', amount: 40 },
-  { id: 'A-103', vehicle: 'MH-02-CD-5678', type: 'Bike', status: 'Monthly Pass', duration: '12d remaining', paidDuration: '12d', amount: 2000 },
-  { id: 'A-101', vehicle: 'MH-15-EF-2341', type: 'Car', status: 'Overdue', duration: '1h 45m', paidDuration: '1h 20m', amount: 120 },
+  { id: 'A-102', vehicle: 'MH-12-BT-3498', type: 'Bike', status: 'Active', duration: '1h 20m', paidDuration: '1h 00m', amount: 40, site: 'Site-A1', slot: 1 },
+  { id: 'A-103', vehicle: 'MH-02-CD-5678', type: 'Bike', status: 'Monthly Pass', duration: '12d remaining', paidDuration: '12d', amount: 2000, site: 'Site-A1', slot: 2 },
+  { id: 'A-101', vehicle: 'MH-15-EF-2341', type: 'Car', status: 'Overdue', duration: '1h 45m', paidDuration: '1h 20m', amount: 120, site: 'Site-A2', slot: 1 },
 ];
 
 const starterAlerts = [
@@ -30,6 +34,29 @@ function formatCurrency(value) {
     currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
+}
+
+function normalizeTokenRecord(row) {
+  const tokenNumber = row?.token_number || row?.id || row?.token || 'N/A';
+  const rawStatus = String(row?.status || 'active').toLowerCase();
+  const status = rawStatus === 'completed'
+    ? 'Completed'
+    : rawStatus === 'cancelled'
+      ? 'Cancelled'
+      : 'Active';
+
+  return {
+    id: tokenNumber,
+    token: tokenNumber,
+    vehicle: row?.vehicle_number || row?.vehicle || 'N/A',
+    type: row?.vehicle_type === 'car' ? 'Car' : 'Bike',
+    status,
+    site: row?.site_name || row?.site || 'Site-A1',
+    slot: Number(row?.slot_number ?? row?.slot ?? 1),
+    duration: row?.paid_minutes ? `${Math.floor(row.paid_minutes / 60)}h ${String(row.paid_minutes % 60).padStart(2, '0')}m` : '1h 00m',
+    paidDuration: row?.paid_minutes ? `${Math.floor(row.paid_minutes / 60)}h ${String(row.paid_minutes % 60).padStart(2, '0')}m` : '1h 00m',
+    amount: Number(row?.paid_amount ?? row?.amount ?? 0),
+  };
 }
 
 export default function DashboardPage() {
@@ -57,6 +84,28 @@ export default function DashboardPage() {
       return;
     }
 
+    const loadTokens = async () => {
+      try {
+        const response = await fetch('/api/tokens');
+        if (response.ok) {
+          const data = await response.json();
+          const available = Array.isArray(data?.tokens) ? data.tokens.map(normalizeTokenRecord) : [];
+          if (available.length > 0) {
+            setTokens(available);
+            return;
+          }
+        }
+      } catch {
+        // fall back to demo storage when Supabase is not configured
+      }
+
+      const savedTokens = readStoredTokens();
+      if (savedTokens.length > 0) {
+        setTokens(savedTokens);
+      }
+    };
+
+    loadTokens();
     setUser(saved);
     const storedNotifications = readStoredNotifications();
     setNotifications(storedNotifications);
@@ -64,6 +113,7 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
+    saveStoredTokens(tokens);
     const storedCosts = readStoredCosts();
     const generated = buildNotificationsForTokens(tokens, storedCosts);
     const merged = [...generated, ...readStoredNotifications()].slice(0, 10);
@@ -108,9 +158,10 @@ export default function DashboardPage() {
     { label: "Today's Revenue", value: formatCurrency(tokens.reduce((sum, token) => sum + Number(token.amount || 0), 0)), detail: 'Total earnings' },
   ], [tokens]);
 
-  const handleCreateToken = () => {
+  const handleCreateToken = async () => {
     const amountNumber = Number(String(formData.amount).replace(/[^\d.]/g, '')) || 0;
-    const nextToken = {
+    const existingTokens = readStoredTokens().length ? readStoredTokens() : tokens;
+    const nextToken = assignTokenSlot({
       id: formData.token,
       vehicle: formData.vehicle,
       type: formData.type,
@@ -118,9 +169,43 @@ export default function DashboardPage() {
       duration: formData.duration,
       paidDuration: formData.duration,
       amount: amountNumber,
-    };
+    }, existingTokens);
 
-    setTokens((current) => [nextToken, ...current]);
+    try {
+      const response = await fetch('/api/tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token_number: formData.token,
+          vehicle_number: formData.vehicle,
+          vehicle_type: formData.type.toLowerCase(),
+          pass_type: formData.status === 'Monthly Pass' ? 'monthly' : 'hourly',
+          paid_minutes: parseDurationMinutes(formData.duration),
+          paid_amount: amountNumber,
+          driver_name: user.name || 'Station user',
+          status: formData.status,
+          site_name: nextToken.site,
+          slot_number: nextToken.slot,
+        }),
+      });
+
+      const json = await response.json();
+      if (response.ok && json?.token) {
+        const stored = normalizeTokenRecord(json.token);
+        const nextTokens = [stored, ...tokens.filter((token) => token.id !== stored.id)];
+        setTokens(nextTokens);
+        saveStoredTokens(nextTokens);
+      } else {
+        const nextTokens = [nextToken, ...existingTokens.filter((token) => token.id !== nextToken.id)];
+        setTokens(nextTokens);
+        saveStoredTokens(nextTokens);
+      }
+    } catch {
+      const nextTokens = [nextToken, ...existingTokens.filter((token) => token.id !== nextToken.id)];
+      setTokens(nextTokens);
+      saveStoredTokens(nextTokens);
+    }
+
     setShowForm(false);
     setAlerts((current) => [
       {
@@ -150,8 +235,8 @@ export default function DashboardPage() {
       <div className="topbar-row">
         <div className="dashboard-header">
           <div>
-            <p className="eyebrow">Railway operations</p>
-            <h1>Railway Token System</h1>
+            <p className="eyebrow">Parking operations</p>
+            <h1>Parking Token System</h1>
           </div>
           <div className="header-right">
             <span className="notification-chip">Open alerts {notificationCount}</span>
