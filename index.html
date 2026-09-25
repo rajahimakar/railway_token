@@ -565,6 +565,70 @@
             letter-spacing: 0.08em;
         }
 
+        .alert-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .alert-item {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-left: 4px solid #f59e0b;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .alert-item.critical {
+            background: #fef2f2;
+            border-color: #fecaca;
+            border-left-color: #ef4444;
+        }
+
+        .alert-item .alert-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .alert-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .alert-item.critical .alert-badge {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alert-meta {
+            color: #6b7280;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .alert-actions {
+            margin-top: 12px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .review-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
         @keyframes slideIn {
             from {
                 transform: translateX(-20px);
@@ -662,6 +726,7 @@
                 <button class="tab-btn" data-tab="parking" onclick="switchTab('parking')">Parking</button>
                 <button class="tab-btn" data-tab="tokens" onclick="switchTab('tokens')">Tokens</button>
                 <button class="tab-btn" data-tab="costs" onclick="switchTab('costs')">Costs</button>
+                <button class="tab-btn" data-tab="alerts" onclick="switchTab('alerts')">Alerts</button>
                 <button class="tab-btn" data-tab="history" onclick="switchTab('history')">History</button>
                 <button class="action-btn btn-secondary" onclick="logoutUser()" style="margin: 0;">Logout</button>
             </div>
@@ -806,7 +871,7 @@
                     </div>
                     <div class="cost-item">
                         <h4>Grace Period</h4>
-                        <div class="cost-value"><span id="gracePeriod">15</span> min</div>
+                        <div class="cost-value"><span id="gracePeriod">10</span> min</div>
                     </div>
                 </div>
                 <div style="margin-top: 30px;">
@@ -833,6 +898,57 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts / Overdue Section -->
+        <div id="alerts" class="content-section">
+            <div class="main-card">
+                <div class="card-title">
+                    Overdue Notifications
+                </div>
+                <div id="overdueNotifications" class="alert-list"></div>
+            </div>
+
+            <div id="ownerReview" class="main-card" style="display: none;">
+                <div class="card-title">
+                    Owner Review Dashboard
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vehicle</th>
+                                <th>Paid</th>
+                                <th>Current Stay</th>
+                                <th>Overdue</th>
+                                <th>Owner Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ownerReviewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="employeeQueue" class="main-card" style="display: none;">
+                <div class="card-title">
+                    Employee Queue
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vehicle</th>
+                                <th>Spot</th>
+                                <th>Driver</th>
+                                <th>Overdue</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeQueueBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -956,10 +1072,10 @@
 
     <script>
         const rolePermissions = {
-            siteowner: ['overview', 'parking', 'tokens', 'costs', 'history', 'issue-token', 'edit-costs'],
-            siteemployee: ['overview', 'parking', 'tokens', 'history', 'issue-token'],
+            siteowner: ['overview', 'parking', 'tokens', 'costs', 'alerts', 'owner-review', 'history', 'issue-token', 'edit-costs'],
+            siteemployee: ['overview', 'parking', 'tokens', 'alerts', 'employee-queue', 'history', 'issue-token'],
             business: ['overview', 'costs'],
-            master: ['overview', 'parking', 'tokens', 'costs', 'history', 'issue-token', 'edit-costs']
+            master: ['overview', 'parking', 'tokens', 'costs', 'alerts', 'owner-review', 'employee-queue', 'history', 'issue-token', 'edit-costs']
         };
 
         let database = {
@@ -967,7 +1083,7 @@
                 bike: { hourlyRate: 20, dailyMax: 100 },
                 car: { hourlyRate: 40, dailyMax: 200 },
                 monthlyPassPrice: 2000,
-                gracePeriod: 15
+                gracePeriod: 10
             },
             users: [
                 { username: 'siteowner', password: 'owner123', role: 'siteowner', name: 'Site Owner' },
@@ -977,7 +1093,8 @@
             ],
             currentUser: null,
             tokens: [],
-            history: []
+            history: [],
+            notifications: []
         };
 
         function getCostConfig(vehicleType = 'bike') {
@@ -1056,6 +1173,11 @@
                 const costsTab = document.querySelector('.tab-btn[data-tab="costs"]');
                 if (costsTab) costsTab.style.display = 'none';
             }
+
+            const ownerReviewCard = document.getElementById('ownerReview');
+            const employeeQueueCard = document.getElementById('employeeQueue');
+            if (ownerReviewCard) ownerReviewCard.style.display = canAccess('owner-review') ? 'block' : 'none';
+            if (employeeQueueCard) employeeQueueCard.style.display = canAccess('employee-queue') ? 'block' : 'none';
         }
 
         function loginUser() {
@@ -1091,13 +1213,15 @@
                     id: 'A-102',
                     vehicle: 'MH-12-BT-3498',
                     vehicleType: 'bike',
-                    entry: new Date(now - 45 * 60000),
+                    entry: new Date(now - 80 * 60000),
                     exit: null,
                     spot: 'A-1',
                     driver: 'Raj Kumar',
                     phone: '9876543210',
                     status: 'active',
-                    passType: 'hourly'
+                    passType: 'hourly',
+                    paidMinutes: 60,
+                    paidAmount: 40
                 },
                 {
                     id: 'A-103',
@@ -1109,7 +1233,9 @@
                     driver: 'Priya Singh',
                     phone: '9876543211',
                     status: 'active',
-                    passType: 'monthly'
+                    passType: 'monthly',
+                    paidMinutes: 30 * 24 * 60,
+                    paidAmount: 2000
                 },
                 {
                     id: 'A-101',
@@ -1121,7 +1247,9 @@
                     driver: 'Amit Patel',
                     phone: '9876543212',
                     status: 'active',
-                    passType: 'hourly'
+                    passType: 'hourly',
+                    paidMinutes: 60,
+                    paidAmount: 80
                 }
             ];
 
@@ -1254,6 +1382,9 @@
                 const vehicleType = token.vehicleType || 'bike';
                 const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : calculateCost(token.entry, now, vehicleType, token.passType || 'hourly');
                 const duration = getCurrentDuration(token.entry, token.passType || 'hourly');
+                const overdueInfo = getOverdueInfo(token, now);
+                const statusText = overdueInfo.isOverdue ? 'Overdue' : (token.passType === 'monthly' ? 'Monthly Pass' : 'Active');
+                const badgeClass = overdueInfo.isOverdue ? 'status-completed' : 'status-active';
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1263,7 +1394,7 @@
                     <td>${token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString()}</td>
                     <td>${duration}</td>
                     <td>₹${cost}</td>
-                    <td><span class="status-badge status-active">${token.passType === 'monthly' ? 'Monthly Pass' : 'Active'}</span></td>
+                    <td><span class="status-badge ${badgeClass}">${statusText}</span></td>
                     <td>
                         <button class="action-btn btn-success" onclick="completeToken('${token.id}')">Exit</button>
                     </td>
@@ -1311,6 +1442,8 @@
                 const cost = token.passType === 'monthly' ? database.costs.monthlyPassPrice : (token.exit ? calculateCost(token.entry, token.exit, token.vehicleType || 'bike', token.passType || 'hourly') : calculateCost(token.entry, now, token.vehicleType || 'bike', token.passType || 'hourly'));
                 const entryDisplay = token.passType === 'monthly' ? token.entry.toLocaleDateString('en-IN') : token.entry.toLocaleTimeString();
                 const exitDisplay = token.exit ? (token.passType === 'monthly' ? token.exit.toLocaleDateString('en-IN') : token.exit.toLocaleTimeString()) : 'Active';
+                const overdueInfo = getOverdueInfo(token, now);
+                const statusText = overdueInfo.isOverdue ? 'Overdue' : (token.status === 'active' ? 'Active' : 'Completed');
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1319,7 +1452,7 @@
                     <td>${token.vehicleType === 'car' ? 'Car' : 'Bike'}</td>
                     <td>${entryDisplay}</td>
                     <td>${exitDisplay}</td>
-                    <td><span class="status-badge ${token.status === 'active' ? 'status-active' : 'status-completed'}">${token.status.charAt(0).toUpperCase() + token.status.slice(1)}</span></td>
+                    <td><span class="status-badge ${overdueInfo.isOverdue ? 'status-completed' : (token.status === 'active' ? 'status-active' : 'status-completed')}">${statusText}</span></td>
                     <td>₹${cost}</td>
                     <td>
                         ${token.status === 'active' ? `<button class="action-btn btn-success" onclick="completeToken('${token.id}')">Complete</button>` : '<span>—</span>'}
@@ -1327,6 +1460,154 @@
                 `;
                 body.appendChild(row);
             });
+        }
+
+        function getTokenPaidMinutes(token) {
+            if (token.passType === 'monthly') return 30 * 24 * 60;
+            return Number(token.paidMinutes || 60);
+        }
+
+        function getOverdueInfo(token, now = new Date()) {
+            if (token.status !== 'active' || token.passType === 'monthly') {
+                return { isOverdue: false, overdueMinutes: 0, paidMinutes: getTokenPaidMinutes(token), elapsedMinutes: 0 };
+            }
+
+            const elapsedMinutes = Math.max(0, Math.floor((now - token.entry) / (1000 * 60)));
+            const paidMinutes = getTokenPaidMinutes(token);
+            const thresholdMinutes = paidMinutes + database.costs.gracePeriod;
+            const overdueMinutes = Math.max(0, elapsedMinutes - thresholdMinutes);
+
+            return {
+                isOverdue: overdueMinutes > 0,
+                overdueMinutes,
+                paidMinutes,
+                elapsedMinutes,
+                thresholdMinutes
+            };
+        }
+
+        function getNotificationMessage(token, overdueInfo) {
+            const paidMinutes = overdueInfo.paidMinutes;
+            return `Vehicle ${token.vehicle} exceeded the paid duration by ${overdueInfo.overdueMinutes} minutes. Paid for ${Math.round(paidMinutes / 60)} hour(s), current stay is ${Math.round((overdueInfo.elapsedMinutes + paidMinutes + database.costs.gracePeriod) / 60)} hour(s).`;
+        }
+
+        function refreshOverdueAlerts() {
+            const now = new Date();
+            database.tokens.filter(token => token.status === 'active' && token.passType !== 'monthly').forEach(token => {
+                const overdueInfo = getOverdueInfo(token, now);
+                if (!overdueInfo.isOverdue) return;
+
+                const alertKey = `${token.id}-${Math.max(0, Math.floor(overdueInfo.overdueMinutes / 15))}`;
+                const existingNotification = database.notifications.find(item => item.tokenId === token.id && item.alertKey === alertKey);
+                if (existingNotification) return;
+
+                database.notifications.push({
+                    id: `notif-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                    tokenId: token.id,
+                    alertKey,
+                    vehicle: token.vehicle,
+                    vehicleType: token.vehicleType,
+                    spot: token.spot,
+                    driver: token.driver,
+                    overdueMinutes: overdueInfo.overdueMinutes,
+                    paidMinutes: overdueInfo.paidMinutes,
+                    currentStayMinutes: overdueInfo.elapsedMinutes,
+                    role: 'owner',
+                    message: getNotificationMessage(token, overdueInfo),
+                    createdAt: now.toISOString()
+                });
+
+                database.notifications.push({
+                    id: `notif-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                    tokenId: token.id,
+                    alertKey: `${alertKey}-employee`,
+                    vehicle: token.vehicle,
+                    vehicleType: token.vehicleType,
+                    spot: token.spot,
+                    driver: token.driver,
+                    overdueMinutes: overdueInfo.overdueMinutes,
+                    paidMinutes: overdueInfo.paidMinutes,
+                    currentStayMinutes: overdueInfo.elapsedMinutes,
+                    role: 'employee',
+                    message: `${token.vehicle} is overdue by ${overdueInfo.overdueMinutes} minutes. Please check the vehicle and arrange exit or payment review.`,
+                    createdAt: now.toISOString()
+                });
+            });
+        }
+
+        function renderOverdueNotifications() {
+            const container = document.getElementById('overdueNotifications');
+            if (!container) return;
+
+            const notifications = database.notifications.slice().reverse();
+            if (!notifications.length) {
+                container.innerHTML = '<div class="alert-item"><div class="alert-head"><strong>No overdue vehicles</strong></div><div class="alert-meta">All active vehicles are within their paid duration and grace window.</div></div>';
+                return;
+            }
+
+            container.innerHTML = notifications.map(item => `
+                <div class="alert-item ${item.overdueMinutes >= 30 ? 'critical' : ''}">
+                    <div class="alert-head">
+                        <strong>${item.vehicle}</strong>
+                        <span class="alert-badge">${item.role === 'owner' ? 'Owner alert' : 'Employee alert'}</span>
+                    </div>
+                    <div class="alert-meta">Spot ${item.spot} • Driver: ${item.driver} • Overdue: ${item.overdueMinutes} min</div>
+                    <div>${item.message}</div>
+                    <div class="alert-actions">
+                        <button class="action-btn btn-secondary" onclick="markNotificationResolved('${item.id}')">Reviewed</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function markNotificationResolved(notificationId) {
+            database.notifications = database.notifications.filter(item => item.id !== notificationId);
+            renderOverdueNotifications();
+            renderOwnerReviewTable();
+            renderEmployeeQueueTable();
+        }
+
+        function renderOwnerReviewTable() {
+            const body = document.getElementById('ownerReviewBody');
+            if (!body) return;
+
+            const ownerRows = database.notifications.filter(item => item.role === 'owner');
+            if (!ownerRows.length) {
+                body.innerHTML = '<tr><td colspan="6">No overdue vehicles requiring owner review.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = ownerRows.map(item => `
+                <tr>
+                    <td>${item.vehicle}</td>
+                    <td>${Math.round(item.paidMinutes / 60)}h</td>
+                    <td>${Math.round((item.currentStayMinutes + item.paidMinutes + database.costs.gracePeriod) / 60)}h</td>
+                    <td>${item.overdueMinutes} min</td>
+                    <td>${item.overdueMinutes >= 30 ? 'High priority' : 'Pending review'}</td>
+                    <td><button class="action-btn btn-success" onclick="markNotificationResolved('${item.id}')">Resolve</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderEmployeeQueueTable() {
+            const body = document.getElementById('employeeQueueBody');
+            if (!body) return;
+
+            const employeeRows = database.notifications.filter(item => item.role === 'employee');
+            if (!employeeRows.length) {
+                body.innerHTML = '<tr><td colspan="5">No overdue vehicles for employee follow-up.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = employeeRows.map(item => `
+                <tr>
+                    <td>${item.vehicle}</td>
+                    <td>${item.spot}</td>
+                    <td>${item.driver}</td>
+                    <td>${item.overdueMinutes} min</td>
+                    <td><button class="action-btn btn-secondary" onclick="markNotificationResolved('${item.id}')">Check</button></td>
+                </tr>
+            `).join('');
         }
 
         function renderHistoryTable() {
@@ -1441,6 +1722,7 @@
 
             const tokenId = 'A-' + (database.tokens.length + 100);
             const entryDate = passType === 'monthly' ? new Date(`${lockedInDateValue}T00:00:00`) : new Date();
+            const paidMinutes = passType === 'monthly' ? 30 * 24 * 60 : 60;
             const newToken = {
                 id: tokenId,
                 vehicle: vehicleNo,
@@ -1452,6 +1734,8 @@
                 phone: driverPhone,
                 status: 'active',
                 passType,
+                paidMinutes,
+                paidAmount: passType === 'monthly' ? database.costs.monthlyPassPrice : (vehicleType === 'car' ? database.costs.car.hourlyRate : database.costs.bike.hourlyRate),
                 lockedInDate: passType === 'monthly' ? lockDateString(lockedInDateValue) : null,
                 expiryDate: passType === 'monthly' ? getMonthlyExpiryDate(entryDate) : null
             };
@@ -1523,10 +1807,14 @@
         }
 
         function updateAllTables() {
+            refreshOverdueAlerts();
             renderActiveTokens();
             renderParkingTable();
             renderTokensTable();
             renderHistoryTable();
+            renderOverdueNotifications();
+            renderOwnerReviewTable();
+            renderEmployeeQueueTable();
         }
 
         function switchTab(tabName) {
