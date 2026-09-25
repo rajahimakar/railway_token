@@ -13,7 +13,11 @@ const checks = [
   ['Bike daily max', /Bike 24 Hours/.test(html) && /100/.test(html)],
   ['Car daily max', /Car 24 Hours/.test(html) && /200/.test(html)],
   ['Monthly pass', /Monthly Pass \(30 Days\)/.test(html) && /2000/.test(html)],
-  ['Monthly lock-in date', /Locked-in Date/.test(html) || /lockedInDate/.test(html)]
+  ['Monthly lock-in date', /Locked-in Date/.test(html) || /lockedInDate/.test(html)],
+  ['Grace period 10 minutes', /gracePeriod:\s*10/.test(html) || /gracePeriod.*10/.test(html)],
+  ['Owner review page', /id="ownerReview"/.test(html) || /Owner Review/.test(html)],
+  ['Employee queue page', /id="employeeQueue"/.test(html) || /Employee Queue/.test(html)],
+  ['Overdue notification panel', /id="overdueNotifications"/.test(html) || /Overdue Notifications/.test(html)]
 ];
 
 const failed = checks.filter(([, ok]) => !ok);
