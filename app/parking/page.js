@@ -108,18 +108,18 @@ export default function ParkingPage() {
       <div className="topbar-row">
         <div className="dashboard-header">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div className="railway-mark" style={{ width: '34px', height: '34px', margin: 0, fontSize: '20px' }}>🚂</div>
-              <h1 style={{ fontSize: '28px' }}>Parking Token System</h1>
+            <div className="brand-inline-row">
+              <div className="railway-mark">🚂</div>
+              <h1>Parking Token System</h1>
             </div>
           </div>
           <div className="header-right">
-            <span className="user-badge" style={{ background: 'rgba(255,255,255,0.16)' }}>{user.role}</span>
+            <span className="user-badge">{user.role}</span>
           </div>
         </div>
       </div>
 
-      <div className="nav-row" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)' }}>
+      <div className="nav-row">
         {navTabs.map((tab) => (
           <Link
             key={tab.label}
