@@ -12,9 +12,46 @@ The dashboard helps staff and admins:
 - complete token sessions when vehicles exit
 - search and review token and history records
 
+## Live web app direction
+
+The current app is still a prototype, but the next product phase should move from browser-local state to a real persisted system. The most practical live architecture is a web application with:
+
+- a frontend app for dashboard and operations views
+- a backend API for token, vehicle, and audit operations
+- a relational database for persistence and historical tracking
+- secure user authentication and role-based access
+- notification services for overdue vehicles and owner/employee review tasks
+
+This allows the project to keep the current operational workflow while adding real records, accountability, and reporting.
+
+## Recommended solution
+
+### Preferred architecture
+Use a lightweight full-stack stack:
+
+- Frontend: React or Next.js
+- Backend: Node.js with Express or Next.js API routes
+- Database: PostgreSQL (or SQLite for early local development)
+- ORM: Prisma
+- Auth: secure session auth or Auth.js
+- Hosting: Vercel + managed Postgres or Railway + managed DB
+
+### Why this route
+This gives the team a production path without jumping straight into a heavyweight enterprise system. It keeps the app easy to build and extend while also supporting audit trails, token history, payment tracking, and operational dashboards.
+
+### Data to persist
+At minimum, the live system should store:
+- users and roles
+- vehicle records
+- parking or token sessions
+- payment and grace-period logic
+- token history and audit logs
+- notifications and review status
+- owner/employee follow-up actions
+
 ## Architecture and process notes
 
-This project intentionally uses a single-page front-end with browser-local state to keep the operational workflow easy to demo and validate. The central idea is to model station operations in a way that is understandable to staff while still supporting role-based permissions and pricing logic.
+The product started as a single-page front-end with browser-local state to validate operations quickly. That was the correct demo route. The next step is to transition the model into a real web app while preserving the same business flow and role structure.
 
 For the full process and rationale, see:
 - [ARCHITECTURE.md](ARCHITECTURE.md) — architecture process and design choices
