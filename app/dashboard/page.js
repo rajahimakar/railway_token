@@ -77,26 +77,28 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    if (user.role !== 'SITE OWNER') {
+      setShowForm(false);
+    }
+  }, [user.role]);
+
   const isOwner = user.role === 'SITE OWNER';
   const notificationCount = notifications.length;
 
   const navTabs = isOwner
     ? [
         { label: 'Overview', href: '/dashboard' },
-        { label: 'Parking', href: '/dashboard' },
-        { label: 'Tokens', href: '/dashboard' },
+        { label: 'Parking', href: '/parking' },
+        { label: 'Tokens', href: '/tokens' },
         { label: 'Costs', href: '/costs' },
-        { label: 'Overdue', href: '/overdue' },
-        { label: 'Notifications', href: '/notifications' },
-        { label: 'History', href: '/dashboard' },
+        { label: 'History', href: '/history' },
       ]
     : [
         { label: 'Overview', href: '/dashboard' },
-        { label: 'Parking', href: '/dashboard' },
-        { label: 'Tokens', href: '/dashboard' },
-        { label: 'Overdue', href: '/overdue' },
-        { label: 'Notifications', href: '/notifications' },
-        { label: 'History', href: '/dashboard' },
+        { label: 'Parking', href: '/parking' },
+        { label: 'Tokens', href: '/tokens' },
+        { label: 'History', href: '/history' },
       ];
 
   const stats = useMemo(() => [
@@ -234,7 +236,9 @@ export default function DashboardPage() {
         <article className="panel">
           <div className="panel-header">
             <h2>Active tokens</h2>
-            <button className="primary-btn" onClick={() => setShowForm(true)}>+ Create Token</button>
+            {isOwner && (
+              <button className="primary-btn" onClick={() => setShowForm(true)}>+ Create Token</button>
+            )}
           </div>
           <div className="table-wrap">
             <table>

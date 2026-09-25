@@ -17,6 +17,12 @@ export default function CostsPage() {
       router.push('/login');
       return;
     }
+
+    if (savedUser.role !== 'SITE OWNER') {
+      router.push('/dashboard');
+      return;
+    }
+
     setUser(savedUser);
 
     const storedCosts = readStoredCosts();
@@ -50,9 +56,10 @@ export default function CostsPage() {
 
       <div className="nav-row">
         <Link href="/dashboard" className="nav-link">Overview</Link>
+        <Link href="/parking" className="nav-link">Parking</Link>
+        <Link href="/tokens" className="nav-link">Tokens</Link>
         <Link href="/costs" className="nav-link active">Costs</Link>
-        <Link href="/overdue" className="nav-link">Overdue</Link>
-        <Link href="/notifications" className="nav-link">Notifications</Link>
+        <Link href="/history" className="nav-link">History</Link>
         <button className="ghost-btn" onClick={() => {
           clearDemoUser();
           router.push('/login');

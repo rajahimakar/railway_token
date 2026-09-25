@@ -30,11 +30,28 @@ export default function NotificationsPage() {
     setResolvedNotifications(readResolvedNotifications());
   }, [router]);
 
+  const isOwner = user.role === 'SITE OWNER';
+
   const grouped = useMemo(() => {
     const owner = notifications.filter((entry) => entry.audience === 'Owner');
     const employee = notifications.filter((entry) => entry.audience === 'Employee');
     return { owner, employee };
   }, [notifications]);
+
+  const navTabs = isOwner
+    ? [
+        { label: 'Overview', href: '/dashboard' },
+        { label: 'Parking', href: '/parking' },
+        { label: 'Tokens', href: '/tokens' },
+        { label: 'Costs', href: '/costs' },
+        { label: 'History', href: '/history' },
+      ]
+    : [
+        { label: 'Overview', href: '/dashboard' },
+        { label: 'Parking', href: '/parking' },
+        { label: 'Tokens', href: '/tokens' },
+        { label: 'History', href: '/history' },
+      ];
 
   const handleLogout = () => {
     clearDemoUser();
@@ -64,10 +81,15 @@ export default function NotificationsPage() {
       </div>
 
       <div className="nav-row">
-        <Link href="/dashboard" className="nav-link">Overview</Link>
-        <Link href="/costs" className="nav-link">Costs</Link>
-        <Link href="/overdue" className="nav-link">Overdue</Link>
-        <Link href="/notifications" className="nav-link active">Notifications</Link>
+        {navTabs.map((tab) => (
+          <Link
+            key={tab.label}
+            href={tab.href}
+            className={`nav-link ${tab.label === 'Notifications' ? 'active' : ''}`}
+          >
+            {tab.label}
+          </Link>
+        ))}
         <button className="ghost-btn" onClick={handleLogout}>Logout</button>
       </div>
 
