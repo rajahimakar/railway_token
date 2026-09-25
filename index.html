@@ -429,30 +429,117 @@
         .login-screen {
             position: fixed;
             inset: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background:
+                radial-gradient(circle at top left, rgba(224, 231, 255, 0.35), transparent 22%),
+                linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #4338ca 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 2000;
+            padding: 20px;
         }
 
         .login-panel {
-            width: min(520px, 90vw);
+            width: min(820px, 92vw);
             background: white;
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+            border-radius: 22px;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1.06fr 1.2fr;
+            box-shadow: 0 28px 70px rgba(15, 23, 42, 0.24);
+        }
+
+        .login-brand {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 64, 175, 0.92));
+            color: white;
+            padding: 36px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .railway-mark {
+            font-size: 46px;
+            margin-bottom: 18px;
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.12);
+            display: grid;
+            place-items: center;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .brand-label {
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .login-brand h3 {
+            font-size: 28px;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .login-brand p {
+            color: rgba(255, 255, 255, 0.82);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .login-brand ul {
+            list-style: none;
+            display: grid;
+            gap: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .login-brand li {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .login-brand li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #93c5fd;
+            font-weight: 700;
+        }
+
+        .login-card {
+            background: white;
+            padding: 34px 30px;
         }
 
         .login-header {
-            text-align: center;
+            text-align: left;
             margin-bottom: 24px;
         }
 
+        .brand-badge {
+            display: inline-flex;
+            margin-bottom: 12px;
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
         .login-header h2 {
-            font-size: 28px;
+            font-size: 30px;
             margin-bottom: 8px;
-            color: #1f2937;
+            color: #111827;
         }
 
         .login-header p {
@@ -462,43 +549,20 @@
 
         .login-form {
             display: grid;
-            gap: 16px;
-        }
-
-        .demo-accounts {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .demo-account {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 12px;
-            color: #374151;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        .demo-account strong {
-            display: block;
-            color: #111827;
-            margin-bottom: 4px;
+            gap: 18px;
         }
 
         .user-chip {
             display: inline-flex;
             align-items: center;
             background: #eef2ff;
-            color: #3730a3;
-            border-radius: 999px;
-            padding: 6px 12px;
+            color: #312e81;
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.02em;
+            border-radius: 999px;
+            padding: 6px 12px;
             text-transform: uppercase;
+            letter-spacing: 0.08em;
         }
 
         @keyframes slideIn {
@@ -553,26 +617,34 @@
 <body>
     <div id="loginScreen" class="login-screen">
         <div class="login-panel">
-            <div class="login-header">
-                <h2>Railway Token Login</h2>
-                <p>Use one of the test accounts below to enter the system.</p>
+            <div class="login-brand">
+                <div class="railway-mark">🚆</div>
+                <div class="brand-label">Railway operations</div>
+                <h3>Station access portal</h3>
+                <p>Securely monitor token issuance, parking occupancy and fare updates from a single operations dashboard.</p>
+                <ul>
+                    <li>Live parking status</li>
+                    <li>Vehicle token controls</li>
+                    <li>Revenue and cost oversight</li>
+                </ul>
             </div>
-            <div class="login-form">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="loginUsername" placeholder="Enter username" value="siteemployee">
+            <div class="login-card">
+                <div class="login-header">
+                    <span class="brand-badge">Protected access</span>
+                    <h2>Railway Token Login</h2>
+                    <p>Enter your secure credentials to continue.</p>
                 </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter password" value="employee123">
+                <div class="login-form">
+                    <div class="form-group">
+                        <label for="loginUsername">Employee ID</label>
+                        <input type="text" id="loginUsername" placeholder="Enter employee ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Access code</label>
+                        <input type="password" id="loginPassword" placeholder="Enter access code">
+                    </div>
+                    <button class="action-btn btn-primary" style="width: 100%;" onclick="loginUser()">Sign in</button>
                 </div>
-                <button class="action-btn btn-primary" style="width: 100%;" onclick="loginUser()">Login</button>
-            </div>
-            <div class="demo-accounts">
-                <div class="demo-account"><strong>Site Owner</strong>username: siteowner<br>password: owner123</div>
-                <div class="demo-account"><strong>Site Employee</strong>username: siteemployee<br>password: employee123</div>
-                <div class="demo-account"><strong>Business Demo</strong>username: business<br>password: business123</div>
-                <div class="demo-account"><strong>Master Admin</strong>username: master<br>password: master123</div>
             </div>
         </div>
     </div>
@@ -908,8 +980,107 @@
             history: []
         };
 
-        function getCostConfig(vehicleType) {
+        function getCostConfig(vehicleType = 'bike') {
             return database.costs[vehicleType] || database.costs.bike;
+        }
+
+        function calculateCost(entryTime, exitTime, vehicleType = 'bike', passType = 'hourly') {
+            if (passType === 'monthly') {
+                return database.costs.monthlyPassPrice;
+            }
+
+            const config = getCostConfig(vehicleType);
+            const minutesDiff = (exitTime - entryTime) / (1000 * 60);
+            const hoursDiff = minutesDiff / 60;
+
+            if (minutesDiff <= database.costs.gracePeriod) return 0;
+
+            const hourlyCharge = Math.ceil(hoursDiff) * config.hourlyRate;
+            return Math.min(hourlyCharge, config.dailyMax);
+        }
+
+        function getMonthlyExpiryDate(startDate) {
+            const expiry = new Date(startDate);
+            expiry.setDate(expiry.getDate() + 30);
+            return expiry;
+        }
+
+        function formatDuration(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            if (hours === 0) return `${mins}m`;
+            return `${hours}h ${mins}m`;
+        }
+
+        function getCurrentDuration(entryTime, passType = 'hourly') {
+            if (passType === 'monthly') {
+                const expiryDate = getMonthlyExpiryDate(entryTime);
+                const now = new Date();
+                const remainingDays = Math.max(0, Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24)));
+                return `${remainingDays}d remaining`;
+            }
+
+            const now = new Date();
+            const minutes = Math.floor((now - entryTime) / (1000 * 60));
+            return formatDuration(minutes);
+        }
+
+        function canAccess(permission) {
+            if (!database.currentUser) return false;
+            return (rolePermissions[database.currentUser.role] || []).includes(permission);
+        }
+
+        function renderAccessControls() {
+            if (!database.currentUser) return;
+            const roleTag = database.currentUser.role.toUpperCase();
+            document.getElementById('currentUserBadge').textContent = roleTag;
+
+            document.querySelectorAll('[data-permission]').forEach(el => {
+                const permission = el.dataset.permission;
+                el.style.display = canAccess(permission) ? 'inline-flex' : 'none';
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                const tab = button.dataset.tab;
+                const visible = (rolePermissions[database.currentUser.role] || []).includes(tab);
+                button.style.display = visible ? 'inline-block' : 'none';
+            });
+
+            const shouldShowRevenue = canAccess('view-revenue');
+            const revenueCard = document.querySelector('.stat-card.revenue');
+            if (revenueCard) {
+                revenueCard.style.display = shouldShowRevenue ? 'block' : 'none';
+            }
+
+            if (!canAccess('view-revenue') && !canAccess('edit-costs')) {
+                const costsTab = document.querySelector('.tab-btn[data-tab="costs"]');
+                if (costsTab) costsTab.style.display = 'none';
+            }
+        }
+
+        function loginUser() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const user = database.users.find(item => item.username === username && item.password === password);
+
+            if (!user) {
+                alert('Access denied. Please verify your employee ID and access code.');
+                return;
+            }
+
+            database.currentUser = user;
+            localStorage.setItem('railwayTokenSession', JSON.stringify(user));
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            renderAccessControls();
+            switchTab('overview');
+        }
+
+        function logoutUser() {
+            database.currentUser = null;
+            localStorage.removeItem('railwayTokenSession');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
         }
 
         function initializeSampleData() {
@@ -1055,7 +1226,7 @@
             const user = database.users.find(item => item.username === username && item.password === password);
 
             if (!user) {
-                alert('Invalid username or password. Please try one of the demo users above.');
+                alert('Access denied. Please verify your employee ID and access code.');
                 return;
             }
 

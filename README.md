@@ -12,9 +12,19 @@ The dashboard helps staff and admins:
 - complete token sessions when vehicles exit
 - search and review token and history records
 
+## Architecture and process notes
+
+This project intentionally uses a single-page front-end with browser-local state to keep the operational workflow easy to demo and validate. The central idea is to model station operations in a way that is understandable to staff while still supporting role-based permissions and pricing logic.
+
+For the full process and rationale, see:
+- [ARCHITECTURE.md](ARCHITECTURE.md) — architecture process and design choices
+- [DECISION_LOG.md](DECISION_LOG.md) — decision log and reasons for the chosen route
+
 ## Project Files
 
-- [railway_token_dashboard.html](railway_token_dashboard.html) — main dashboard UI and interaction logic
+- [index.html](index.html) — main dashboard UI, styling, and interaction logic
+- [ARCHITECTURE.md](ARCHITECTURE.md) — architecture process documentation
+- [DECISION_LOG.md](DECISION_LOG.md) — decision log
 - [README.md](README.md) — project instructions and usage guide
 
 ## Features
@@ -39,7 +49,7 @@ python3 -m http.server 8000
 Then open the app in your browser:
 
 ```text
-http://localhost:8000/railway_token_dashboard.html
+http://localhost:8000/index.html
 ```
 
 ## Notes
@@ -52,7 +62,7 @@ http://localhost:8000/railway_token_dashboard.html
 
 If you want to extend this into a real production system, the next upgrades would be:
 - database integration (SQLite, MySQL, or Postgres)
-- login for admin and staff
+- role-based authentication and secure session handling
 - real-time gate scanner integration
 - exportable reports and analytics
 - API support for gate hardware or QR scanners
