@@ -4,15 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { clearDemoUser, readDemoUser } from '../../lib/auth';
-
-const defaultCosts = {
-  bikeHourly: 20,
-  bikeDaily: 100,
-  carHourly: 40,
-  carDaily: 200,
-  monthlyPass: 2000,
-  graceMinutes: 10,
-};
+import { defaultCosts, readStoredCosts, saveStoredCosts } from '../../lib/demo-business';
 
 export default function CostsPage() {
   const router = useRouter();
@@ -26,10 +18,22 @@ export default function CostsPage() {
       return;
     }
     setUser(savedUser);
+
+    const storedCosts = readStoredCosts();
+    setCosts(storedCosts);
   }, [router]);
 
   const updateCost = (field, value) => {
     setCosts((current) => ({ ...current, [field]: Number(value) || 0 }));
+  };
+
+  const handleSaveCosts = () => {
+    saveStoredCosts(costs);
+  };
+
+  const handleResetCosts = () => {
+    setCosts(defaultCosts);
+    saveStoredCosts(defaultCosts);
   };
 
   return (
@@ -47,6 +51,8 @@ export default function CostsPage() {
       <div className="nav-row">
         <Link href="/dashboard" className="nav-link">Overview</Link>
         <Link href="/costs" className="nav-link active">Costs</Link>
+        <Link href="/overdue" className="nav-link">Overdue</Link>
+        <Link href="/notifications" className="nav-link">Notifications</Link>
         <button className="ghost-btn" onClick={() => {
           clearDemoUser();
           router.push('/login');
@@ -120,8 +126,8 @@ export default function CostsPage() {
         </div>
 
         <div className="form-actions">
-          <button className="ghost-btn" type="button">Reset</button>
-          <button className="primary-btn" type="button">Save changes</button>
+          <button className="ghost-btn" type="button" onClick={handleResetCosts}>Reset</button>
+          <button className="primary-btn" type="button" onClick={handleSaveCosts}>Save changes</button>
         </div>
       </section>
     </main>

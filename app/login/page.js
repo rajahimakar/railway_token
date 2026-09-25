@@ -6,9 +6,9 @@ import { setDemoUser } from '../../lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [employeeId, setEmployeeId] = useState('siteowner');
+  const [employeeId, setEmployeeId] = useState('siteemployee');
   const [password, setPassword] = useState('railway123');
-  const [message, setMessage] = useState('Demo access: siteowner / railway123');
+  const [message, setMessage] = useState('Demo access: siteemployee / railway123');
 
   const handleSubmit = (event) => {
     event.preventDefault();

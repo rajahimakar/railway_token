@@ -4,11 +4,19 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { clearDemoUser, readDemoUser } from '../../lib/auth';
+import {
+  buildNotificationsForTokens,
+  defaultCosts,
+  readResolvedNotifications,
+  readStoredCosts,
+  readStoredNotifications,
+  saveStoredNotifications,
+} from '../../lib/demo-business';
 
 const starterTokens = [
-  { id: 'A-102', vehicle: 'MH-12-BT-3498', type: 'Bike', status: 'Active', duration: '1h 20m', amount: 40 },
-  { id: 'A-103', vehicle: 'MH-02-CD-5678', type: 'Bike', status: 'Monthly Pass', duration: '12d remaining', amount: 2000 },
-  { id: 'A-101', vehicle: 'MH-15-EF-2341', type: 'Car', status: 'Overdue', duration: '1h 45m', amount: 120 },
+  { id: 'A-102', vehicle: 'MH-12-BT-3498', type: 'Bike', status: 'Active', duration: '1h 20m', paidDuration: '1h 00m', amount: 40 },
+  { id: 'A-103', vehicle: 'MH-02-CD-5678', type: 'Bike', status: 'Monthly Pass', duration: '12d remaining', paidDuration: '12d', amount: 2000 },
+  { id: 'A-101', vehicle: 'MH-15-EF-2341', type: 'Car', status: 'Overdue', duration: '1h 45m', paidDuration: '1h 20m', amount: 120 },
 ];
 
 const starterAlerts = [
@@ -26,9 +34,12 @@ function formatCurrency(value) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState({ role: 'SITE OWNER', name: 'Owner Admin' });
+  const [user, setUser] = useState({ role: 'SITE EMPLOYEE', name: 'Station Employee' });
   const [tokens, setTokens] = useState(starterTokens);
   const [alerts, setAlerts] = useState(starterAlerts);
+  const [notifications, setNotifications] = useState([]);
+  const [resolvedCount, setResolvedCount] = useState(0);
+  const [toast, setToast] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     token: 'A-104',
@@ -47,7 +58,46 @@ export default function DashboardPage() {
     }
 
     setUser(saved);
+    const storedNotifications = readStoredNotifications();
+    setNotifications(storedNotifications);
+    setResolvedCount(readResolvedNotifications().length);
   }, [router]);
+
+  useEffect(() => {
+    const storedCosts = readStoredCosts();
+    const generated = buildNotificationsForTokens(tokens, storedCosts);
+    const merged = [...generated, ...readStoredNotifications()].slice(0, 10);
+    setNotifications(merged);
+    saveStoredNotifications(merged);
+  }, [tokens]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(''), 2600);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const isOwner = user.role === 'SITE OWNER';
+  const notificationCount = notifications.length;
+
+  const navTabs = isOwner
+    ? [
+        { label: 'Overview', href: '/dashboard' },
+        { label: 'Parking', href: '/dashboard' },
+        { label: 'Tokens', href: '/dashboard' },
+        { label: 'Costs', href: '/costs' },
+        { label: 'Overdue', href: '/overdue' },
+        { label: 'Notifications', href: '/notifications' },
+        { label: 'History', href: '/dashboard' },
+      ]
+    : [
+        { label: 'Overview', href: '/dashboard' },
+        { label: 'Parking', href: '/dashboard' },
+        { label: 'Tokens', href: '/dashboard' },
+        { label: 'Overdue', href: '/overdue' },
+        { label: 'Notifications', href: '/notifications' },
+        { label: 'History', href: '/dashboard' },
+      ];
 
   const stats = useMemo(() => [
     { label: 'Active Tokens', value: String(tokens.filter((token) => token.status === 'Active').length), detail: 'Currently in use' },
@@ -58,14 +108,17 @@ export default function DashboardPage() {
 
   const handleCreateToken = () => {
     const amountNumber = Number(String(formData.amount).replace(/[^\d.]/g, '')) || 0;
-    setTokens((current) => [{
+    const nextToken = {
       id: formData.token,
       vehicle: formData.vehicle,
       type: formData.type,
       status: formData.status,
       duration: formData.duration,
+      paidDuration: formData.duration,
       amount: amountNumber,
-    }, ...current]);
+    };
+
+    setTokens((current) => [nextToken, ...current]);
     setShowForm(false);
     setAlerts((current) => [
       {
@@ -76,6 +129,12 @@ export default function DashboardPage() {
       },
       ...current,
     ]);
+
+    const currentCosts = readStoredCosts() || defaultCosts;
+    const generated = buildNotificationsForTokens([nextToken], currentCosts);
+    if (generated.length) {
+      setToast(generated[0].message);
+    }
   };
 
   const handleLogout = () => {
@@ -85,19 +144,31 @@ export default function DashboardPage() {
 
   return (
     <main className="dashboard-shell">
+      {toast && <div className="toast-banner">{toast}</div>}
       <div className="topbar-row">
         <div className="dashboard-header">
           <div>
             <p className="eyebrow">Railway operations</p>
             <h1>Railway Token System</h1>
           </div>
-          <div className="user-badge">{user.role}</div>
+          <div className="header-right">
+            <span className="notification-chip">Open alerts {notificationCount}</span>
+            <span className="notification-chip">Resolved {resolvedCount}</span>
+            <div className="user-badge">{user.role}</div>
+          </div>
         </div>
       </div>
 
       <div className="nav-row">
-        <Link href="/dashboard" className="nav-link active">Overview</Link>
-        <Link href="/costs" className="nav-link">Costs</Link>
+        {navTabs.map((tab) => (
+          <Link
+            key={tab.label}
+            href={tab.href}
+            className={`nav-link ${tab.label === 'Overview' ? 'active' : ''}`}
+          >
+            {tab.label}
+          </Link>
+        ))}
         <button className="ghost-btn" onClick={handleLogout}>Logout</button>
       </div>
 
@@ -198,13 +269,13 @@ export default function DashboardPage() {
             <h2>Overdue alerts</h2>
           </div>
           <div className="alert-list">
-            {alerts.map((alert) => (
-              <div key={`${alert.vehicle}-${alert.audience}`} className={`alert-item ${alert.severity}`}>
+            {notifications.slice(0, 3).map((notification) => (
+              <div key={notification.id} className={`alert-item ${notification.severity}`}>
                 <div className="alert-head">
-                  <strong>{alert.vehicle}</strong>
-                  <span className="mini-badge">{alert.audience}</span>
+                  <strong>{notification.vehicle}</strong>
+                  <span className="mini-badge">{notification.audience}</span>
                 </div>
-                <p>Exceeded allowance by {alert.overdue}</p>
+                <p>{notification.message}</p>
               </div>
             ))}
           </div>
